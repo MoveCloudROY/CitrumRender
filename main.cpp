@@ -6,15 +6,38 @@
 #include <stdexcept>
 
 constexpr int WIDTH = 800;
-constexpr int HEIGHT = 800;
+constexpr int HEIGHT = 600;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
 float vertices[] = {
-    -0.5f, -0.5f, 0.0f,
-     0.5f, -0.5f, 0.0f,
-     0.0f,  0.5f, 0.0f,
+/*
+    // 第一个三角形
+    0.5f, 0.5f, 0.0f,   // 右上角
+    0.5f, -0.5f, 0.0f,  // 右下角
+    -0.5f, 0.5f, 0.0f,  // 左上角
+    // 第二个三角形
+    0.5f, -0.5f, 0.0f,  // 右下角
+    -0.5f, -0.5f, 0.0f, // 左下角
+    -0.5f, 0.5f, 0.0f   // 左上角
+
+    有几个顶点叠加了,额外开销,产生一大堆浪费
+    EBO是一个缓冲区，就像一个顶点缓冲区对象一样，
+    它存储 OpenGL 用来决定要绘制哪些顶点的索引。
+*/
+    0.5f, 0.5f, 0.0f,   // 右上角
+    0.5f, -0.5f, 0.0f,  // 右下角
+    -0.5f, -0.5f, 0.0f, // 左下角
+    -0.5f, 0.5f, 0.0f   // 左上角
+};
+
+unsigned int indices[] = {
+    // 注意索引从0开始! 
+    // 此例的索引(0,1,2,3)就是顶点数组vertices的下标，
+    // 这样可以由下标代表顶点组合成矩形
+    0, 1, 3,
+    1, 2, 3,
 };
 
 const char *vertexShaderSource = "#version 330 core\n"
@@ -68,11 +91,18 @@ int main(void)
     unsigned int VAO;
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
+
     // VBO 创建与数据绑定
     unsigned int VBO;
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // 创建 EBO(IBO)
+    unsigned int EBO;
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // 如何从VBO解析顶点属性 
     // '0' => Corresponding `location` in vertex shader Attribute value
@@ -129,7 +159,9 @@ int main(void)
 
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        // glDrawArrays(GL_TRIANGLES, 0, 3);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 
         /* Swap front and back buffers */

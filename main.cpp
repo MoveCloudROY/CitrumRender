@@ -74,7 +74,7 @@ int main(void)
     glEnableVertexAttribArray(1);
 
     // 生成着色器程序对象
-    Utils::Shader outShader("../shaders/vs/shader.vs", "../shaders/fs/shader.fs");
+    Utils::Shader ourShader("../shaders/vs/shader.vs", "../shaders/fs/shader.fs");
     
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -84,8 +84,18 @@ int main(void)
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        outShader.use();
+        ourShader.use();
         glBindVertexArray(VAO);
+
+        //** HomeWork T2 **//
+        
+        auto time_value = glfwGetTime();
+        ourShader.setFloat("bias", [](double time)->float{
+            constexpr double use_time = 2.0;
+            // return time > use_time? 0.5 : 0.5 * time / use_time;
+            return time;
+        }(time_value));
+        
         //=========== Just Use VBO ===========//
         glDrawArrays(GL_TRIANGLES, 0, 3);
         //============= Use EBO! =============//

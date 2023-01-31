@@ -5,8 +5,8 @@
 #include <vector>
 
 namespace Utils {
-    unsigned int createVAO(const std::vector<float>& vertices, const std::vector<unsigned int>& indices);
-
+    unsigned int createVAO(const std::vector<float>& vertices);
+    void createEBO(const std::vector<unsigned int>& indices);
 }
 
 #endif /* MY_DATA_H__ */

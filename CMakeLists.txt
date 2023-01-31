@@ -31,6 +31,7 @@ target_link_libraries(${PROJECT_NAME} GLEW::GLEW)
 
 target_link_libraries(${PROJECT_NAME} utils)
 
+
 # target_compile_options(${PROJECT_NAME}  PRIVATE -fno-omit-frame-pointer)
 # target_compile_options(${PROJECT_NAME}  PRIVATE -fsanitize=address)
 # target_link_options(${PROJECT_NAME}  PRIVATE -fsanitize=address)

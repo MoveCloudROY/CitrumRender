@@ -37,7 +37,7 @@ std::vector<unsigned int> indices {
     1, 2, 3,
 };
 
-float alpha = 0.2;
+float alpha = 0.0;
 
 int main(void)
 {

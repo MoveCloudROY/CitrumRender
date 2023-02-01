@@ -5,15 +5,17 @@ in vec2 TexCoordSmile;
 
 out vec4 FragColor;
 
-uniform sampler2D texture1;
-uniform sampler2D texture2;
+uniform sampler2D texture_box;
+uniform sampler2D texture_smile;
+
+uniform float alpha;
 
 void main()
 {
-    // FragColor = texture(texture1, TexCoordBox);
+    // FragColor = texture(texture_box, TexCoordBox);
     // FragColor = vec4(ourColor, 1.0f);
-    FragColor = mix(texture(texture1, TexCoordBox),texture(texture2, TexCoordSmile),0.2);
+    FragColor = mix(texture(texture_box, TexCoordBox),texture(texture_smile, TexCoordSmile),alpha);
 
     //**** HomeWork 1 ****//
-    // FragColor = mix(texture(texture1, TexCoordBox),texture(texture2, vec2(1.0 - TexCoordBox.x, TexCoordBox.y)),0.2);
+    // FragColor = mix(texture(texture_box, TexCoordBox),texture(texture_smile, vec2(1.0 - TexCoordBox.x, TexCoordBox.y)),0.2);
 }

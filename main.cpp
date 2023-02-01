@@ -5,24 +5,27 @@
 #include <iostream>
 #include <stdexcept>
 #include <vector>
+#include <functional>
 #include <cmath>
 
 #include <data.h>
 #include <shader.h>
 #include <stb_image.h>
 
+
 constexpr int WIDTH = 800;
 constexpr int HEIGHT = 600;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow *window);
+void processExit(GLFWwindow *window);
+void processInput(GLFWwindow *window, int key, std::function<void(void)> func);
 
 std::vector<float> vertices {
 //     ---- 位置 ----       ---- 颜色 ----     ---- 纹理坐标 ----                               //**** HomeWork 2 ****//
-     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   2.0f, 2.0f,// 右上
-     0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   2.0f, 0.0f, // 右下
-    -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   0.0f, 0.0f, // 左下
-    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f,   0.0f, 2.0f// 左上
+     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   1.7f, 1.7f,// 右上
+     0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   1.7f, 0.3f, // 右下
+    -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   0.3f, 0.3f, // 左下
+    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f,   0.3f, 1.7f// 左上
 };
 
 
@@ -34,6 +37,7 @@ std::vector<unsigned int> indices {
     1, 2, 3,
 };
 
+float alpha = 0.2;
 
 int main(void)
 {
@@ -129,8 +133,8 @@ int main(void)
     //
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     // stb 加载图片
     unsigned char * texture2_data = stbi_load("../assets/awesomeface.png", &width, &height, &nrChannels, 0);
     if (texture2_data) {
@@ -141,13 +145,14 @@ int main(void)
     }
     stbi_image_free(texture2_data);
     ourShader.use();
-    ourShader.setInt("texture1", 0);
-    ourShader.setInt("texture2", 1);
+    ourShader.setInt("texture_box", 0);
+    ourShader.setInt("texture_smile", 1);
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
-        processInput(window);
+        processExit(window);
+
         /* Render here */
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -161,9 +166,6 @@ int main(void)
         glBindTexture(GL_TEXTURE_2D, texture1);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
-
-
-        //** HomeWork T2 **//
         
         auto time_value = glfwGetTime();
         ourShader.setFloat("bias", [](double time)->float{
@@ -171,6 +173,18 @@ int main(void)
             // return time > use_time? 0.5 : 0.5 * time / use_time;
             return time;
         }(time_value));
+
+        //** HomeWork T4 **//
+        processInput(window, GLFW_KEY_DOWN, [&]() {
+            alpha-=0.005f;
+            if (alpha <= 1e-7) alpha = 0.0f;
+            ourShader.setFloat("alpha", alpha);
+        });
+        processInput(window, GLFW_KEY_UP, [&]() {
+            alpha+=0.005f;
+            if (alpha > 1.0f) alpha = 1.0f;
+            ourShader.setFloat("alpha", alpha);
+        });
         
         //=========== Just Use VBO ===========//
         // glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -196,8 +210,14 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-void processInput(GLFWwindow *window)
+void processExit(GLFWwindow *window)
 {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+}
+
+void processInput(GLFWwindow *window, int key, std::function<void(void)> func)
+{
+    if(glfwGetKey(window, key) == GLFW_PRESS)
+        func();
 }

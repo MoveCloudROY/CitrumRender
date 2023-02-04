@@ -1,7 +1,13 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/fwd.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <cstdlib>
+#include <glm/trigonometric.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -11,6 +17,7 @@
 #include <data.h>
 #include <shader.h>
 #include <stb_image.h>
+#include <todo.h>
 
 
 constexpr int WIDTH = 800;
@@ -148,6 +155,7 @@ int main(void)
     ourShader.setInt("texture_box", 0);
     ourShader.setInt("texture_smile", 1);
 
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
@@ -168,11 +176,17 @@ int main(void)
         glBindTexture(GL_TEXTURE_2D, texture2);
         
         auto time_value = glfwGetTime();
-        ourShader.setFloat("bias", [](double time)->float{
-            constexpr double use_time = 2.0;
-            // return time > use_time? 0.5 : 0.5 * time / use_time;
-            return time;
-        }(time_value));
+
+        // 如果使用的是 glm 0.9.9 及以上版本，不能使用 
+        //     glm::mat4 trans
+        // 而应如下显式声明
+        glm::mat4 trans{1.0f};
+        trans = glm::scale(trans, glm::vec3(0.6, 0.6, 0.6));
+        trans = glm::rotate(trans, static_cast<float>(time_value), glm::vec3(0.0, 0.0, 1.0));
+        trans = glm::translate(trans, glm::vec3(std::cos(time_value), std::sin(time_value), 0.0f));
+
+        unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
 
         //** HomeWork T4 **//
         processInput(window, GLFW_KEY_DOWN, [&]() {

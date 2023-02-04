@@ -181,9 +181,9 @@ int main(void)
         //     glm::mat4 trans
         // 而应如下显式声明
         glm::mat4 trans{1.0f};
+        trans = glm::translate(trans, glm::vec3(std::cos(time_value), std::sin(time_value), 0.0f));
         trans = glm::scale(trans, glm::vec3(0.6, 0.6, 0.6));
         trans = glm::rotate(trans, static_cast<float>(time_value), glm::vec3(0.0, 0.0, 1.0));
-        trans = glm::translate(trans, glm::vec3(std::cos(time_value), std::sin(time_value), 0.0f));
 
         unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));

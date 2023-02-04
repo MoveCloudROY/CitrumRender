@@ -206,6 +206,15 @@ int main(void)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
+        glm::mat4 trans2{1.0f};
+        trans2 = glm::translate(trans2, glm::vec3(-0.5f, 0.5f, 0.0f));
+        float scale = 0.5f * (std::sin(time_value) + 1.01f);
+        trans2 = glm::scale(trans2, glm::vec3(scale, scale, scale));
+
+        unsigned int transformLoc2 = glGetUniformLocation(ourShader.ID, "transform");
+        glUniformMatrix4fv(transformLoc2, 1, GL_FALSE, glm::value_ptr(trans2));
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);

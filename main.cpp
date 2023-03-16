@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/fwd.hpp>
+#include <glm/geometric.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -132,15 +133,9 @@ int main(void) {
 
     // 如何从VBO解析顶点属性,并将状态保存到 VAO
     // '0' => Corresponding `location` in vertex shader Attribute value
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0); // position
-    glVertexAttribPointer(
-        1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
-        (void*)(3 * sizeof(float))
-    ); // texture_box
-    glVertexAttribPointer(
-        2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
-        (void*)(5 * sizeof(float))
-    ); // texture_smile
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);                   // position
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float))); // texture_box
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(5 * sizeof(float))); // texture_smile
 
     // 以顶点属性位置值作为参数，启用顶点属性
     glEnableVertexAttribArray(0);
@@ -169,9 +164,7 @@ int main(void) {
     unsigned char* texture1_data =
         stbi_load("../assets/container.jpg", &width, &height, &nrChannels, 0);
     if (texture1_data) {
-        glTexImage2D(
-            GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, texture1_data
-        );
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, texture1_data);
         glGenerateMipmap(GL_TEXTURE_2D);
     } else {
         std::cout << "Failed to load texture" << std::endl;
@@ -204,9 +197,7 @@ int main(void) {
     unsigned char* texture2_data =
         stbi_load("../assets/awesomeface.png", &width, &height, &nrChannels, 0);
     if (texture2_data) {
-        glTexImage2D(
-            GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture2_data
-        );
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture2_data);
         glGenerateMipmap(GL_TEXTURE_2D);
     } else {
         std::cout << "Failed to load texture" << std::endl;
@@ -224,8 +215,6 @@ int main(void) {
     glm::mat4 model{1.0f};
     model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
-    glm::mat4 view{1.0f};
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 
     // 启用深度测试
     glEnable(GL_DEPTH_TEST);
@@ -251,9 +240,9 @@ int main(void) {
         // 清理颜色和深度缓冲位
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        int screen_w, screen_h;
-        glfwGetFramebufferSize(window, &screen_w, &screen_h);
-        auto projection = glm::perspective(glm::radians(45.f), (float)screen_w / (float)screen_h, 0.1f, 100.f);
+        int screenW, screenH;
+        glfwGetFramebufferSize(window, &screenW, &screenH);
+        auto projection = glm::perspective(glm::radians(45.f), (float)screenW / (float)screenH, 0.1f, 100.f);
 
         // 使用 ShaderProgram
         ourShader.use();
@@ -265,15 +254,49 @@ int main(void) {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
+        
+        float radius = 10.0f;
+        float camX   = sin(glfwGetTime()) * radius;
+        float camZ   = cos(glfwGetTime()) * radius;
+        /** 
+        * What is LookAt? 
+
+            // 设置摄像机位置
+            glm::vec3 P = glm::vec3(0.f, 0.f, 3.f);
+            // 设置摄像机方向
+            glm::vec3 cameraTarget = glm::vec3(0.f, 0.f,0.f);
+            glm::vec3 D = glm::normalize(P - cameraTarget);
+            // 设置摄像机右轴
+            glm::vec3 up = glm::vec3(0.f, 1.f, 0.f);
+            glm::vec3 R = glm::normalize(glm::cross(up, D));
+            // 设置摄像机上轴
+            glm::vec3 U=glm::cross(D, R);
+                     --             --    --             --
+                     | R_x R_y R_z 0 |    |  1  0  0 -P_x |
+            LookAt = | U_x U_y U_z 0 |  * |  0  1  0 -P_y |
+                     | D_x D_y D_z 0 |    |  0  0  1 -P_z |
+                     |  0   0   0  0 |    |  0  0  0   1  |
+                     --             --    --             --
+        */
+        // 创建摄像机 LookAt 变换矩阵
+        glm::mat4 view = glm::lookAt(
+            glm::vec3(camX, 0.f, camZ),
+            glm::vec3(0.f, 0.f, 0.f),
+            glm::vec3(0.f, 1.f, 0.f)
+        );
+
         ourShader.setMatrix4f("view", view);
         ourShader.setMatrix4f("projection", projection);
+
         for (std::size_t i = 0; i < 10; ++i) {
             glm::mat4 model{1.0f};
             model = glm::translate(model, cubePositions[i]);
             float angle;
-            if (i == 0 || i % 3 == 0) angle = 20.f * (i+1);
-            else angle = 0;
-            model = glm::rotate(model, glm::radians(angle) *(float)glfwGetTime() , glm::vec3(1.0f, 0.3f, 0.5f));
+            if (i == 0 || i % 3 == 0)
+                angle = 20.f * (i + 1);
+            else
+                angle = 0;
+            model = glm::rotate(model, glm::radians(angle) * (float)glfwGetTime(), glm::vec3(1.0f, 0.3f, 0.5f));
             ourShader.setMatrix4f("model", model);
 
             // //=========== Just Use VBO ===========//

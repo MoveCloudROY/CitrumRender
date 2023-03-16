@@ -270,7 +270,9 @@ int main(void) {
         for (std::size_t i = 0; i < 10; ++i) {
             glm::mat4 model{1.0f};
             model = glm::translate(model, cubePositions[i]);
-            float angle = 20.f * (i+1);
+            float angle;
+            if (i == 0 || i % 3 == 0) angle = 20.f * (i+1);
+            else angle = 0;
             model = glm::rotate(model, glm::radians(angle) *(float)glfwGetTime() , glm::vec3(1.0f, 0.3f, 0.5f));
             ourShader.setMatrix4f("model", model);
 

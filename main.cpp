@@ -25,6 +25,8 @@ constexpr int WIDTH  = 800;
 constexpr int HEIGHT = 600;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xOffset, double yOffset);
 void processExit(GLFWwindow* window);
 void processInput(GLFWwindow* window, int key, std::function<void(void)> func);
 
@@ -99,11 +101,14 @@ std::vector<glm::vec3> cubePositions = {
 
 float alpha = 0.0;
 
-glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
-float deltaTime = 0.0f;     // 当前帧和上一帧的时间差 
-float lastFrameTime = 0.0f; // 上一帧的时间
+glm::vec3 cameraPos     = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront   = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp      = glm::vec3(0.0f, 1.0f, 0.0f);
+float     deltaTime     = 0.0f; // 当前帧和上一帧的时间差
+float     lastFrameTime = 0.0f; // 上一帧的时间
+
+float lastX = (float)WIDTH / 2.f, lastY = (float)HEIGHT / 2.f;
+float yaw = -80.f, pitch = 0.0f, cameraFov = 45.0f;
 
 int main(void) {
     GLFWwindow* window;
@@ -131,6 +136,10 @@ int main(void) {
     // 设置视口大小
     glViewport(0, 0, WIDTH, HEIGHT);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
     // 创建 VAO
     unsigned int VAO = Utils::createVAO(vertices);
@@ -217,11 +226,6 @@ int main(void) {
     ourShader.setInt("texture_smile", 1);
 
 
-    // 获取 MVP 变换矩阵
-    glm::mat4 model{1.0f};
-    model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-
-
     // 启用深度测试
     glEnable(GL_DEPTH_TEST);
 
@@ -248,7 +252,9 @@ int main(void) {
 
         int screenW, screenH;
         glfwGetFramebufferSize(window, &screenW, &screenH);
-        auto projection = glm::perspective(glm::radians(45.f), (float)screenW / (float)screenH, 0.1f, 100.f);
+
+        // 创建投影矩阵 (MVP - Projection)
+        auto projection = glm::perspective(glm::radians(cameraFov), (float)screenW / (float)screenH, 0.1f, 100.f);
 
         // 使用 ShaderProgram
         ourShader.use();
@@ -260,7 +266,7 @@ int main(void) {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
-        
+
         float radius = 10.0f;
         float camX   = sin(glfwGetTime()) * radius;
         float camZ   = cos(glfwGetTime()) * radius;
@@ -284,13 +290,14 @@ int main(void) {
                      |  0   0   0  0 |    |  0  0  0   1  |
                      --             --    --             --
         */
-        // 创建摄像机 LookAt 变换矩阵
+        // 创建摄像机 LookAt 变换矩阵 (MVP - View)
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
         ourShader.setMatrix4f("view", view);
         ourShader.setMatrix4f("projection", projection);
 
         for (std::size_t i = 0; i < 10; ++i) {
+            // 创建模型矩阵 (MVP - Model)
             glm::mat4 model{1.0f};
             model = glm::translate(model, cubePositions[i]);
             float angle;
@@ -316,8 +323,8 @@ int main(void) {
 
         // 计算每帧用时和时间差
         float currentFrameTime = glfwGetTime();
-        deltaTime = currentFrameTime - lastFrameTime;
-        lastFrameTime = currentFrameTime;
+        deltaTime              = currentFrameTime - lastFrameTime;
+        lastFrameTime          = currentFrameTime;
     }
 
     glfwDestroyWindow(window);
@@ -327,6 +334,45 @@ int main(void) {
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+    static bool first_in = true;
+    constexpr float sensitibity = 0.05f;
+    
+    if (first_in) {
+        first_in = false;
+        lastX    = xpos;
+        lastY    = ypos;
+    }
+    float xOffset = xpos - lastX;
+    float yOffset = lastY - ypos;
+    lastX         = xpos;
+    lastY         = ypos;
+    
+    xOffset *= sensitibity;
+    yOffset *= sensitibity;
+
+    yaw += xOffset;
+    pitch += yOffset;
+
+    pitch = pitch > 89.0f ? 89.0f : pitch < -89.0f ? -89.0f
+                                                   : pitch;
+    glm::vec3 front;
+    front.x     = std::cos(glm::radians(pitch)) * std::cos(glm::radians(yaw));
+    front.y     = std::sin(glm::radians(pitch));
+    front.z     = std::cos(glm::radians(pitch)) * std::sin(glm::radians(yaw));
+    cameraFront = glm::normalize(front);
+}
+
+void scroll_callback(GLFWwindow* window, double xOffset, double yOffset) {
+    // constexpr float sensitibity = 0.05f;
+    if (cameraFov >= 1.0f && cameraFov <= 45.0f)
+        cameraFov -= yOffset;
+    if (cameraFov <= 1.0f)
+        cameraFov = 1.0f;
+    if (cameraFov >= 45.0f)
+        cameraFov = 45.0f;
 }
 
 void processExit(GLFWwindow* window) {
@@ -343,15 +389,12 @@ void processInput(GLFWwindow* window, int key, std::function<void(void)> func) {
     // 摄像机移动控制
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         cameraPos += cameraSpeed * cameraFront;
-    } 
-    else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+    } else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
         // 正则化使左右移动速度相等
         cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
-    }
-    else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+    } else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
         cameraPos -= cameraSpeed * cameraFront;
-    }
-    else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+    } else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
         cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
     }
 }

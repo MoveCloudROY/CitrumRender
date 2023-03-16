@@ -99,6 +99,12 @@ std::vector<glm::vec3> cubePositions = {
 
 float alpha = 0.0;
 
+glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+float deltaTime = 0.0f;     // 当前帧和上一帧的时间差 
+float lastFrameTime = 0.0f; // 上一帧的时间
+
 int main(void) {
     GLFWwindow* window;
     /* Initialize the library */
@@ -279,11 +285,7 @@ int main(void) {
                      --             --    --             --
         */
         // 创建摄像机 LookAt 变换矩阵
-        glm::mat4 view = glm::lookAt(
-            glm::vec3(camX, 0.f, camZ),
-            glm::vec3(0.f, 0.f, 0.f),
-            glm::vec3(0.f, 1.f, 0.f)
-        );
+        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
         ourShader.setMatrix4f("view", view);
         ourShader.setMatrix4f("projection", projection);
@@ -311,6 +313,11 @@ int main(void) {
 
         /* Poll for and process events */
         glfwPollEvents();
+
+        // 计算每帧用时和时间差
+        float currentFrameTime = glfwGetTime();
+        deltaTime = currentFrameTime - lastFrameTime;
+        lastFrameTime = currentFrameTime;
     }
 
     glfwDestroyWindow(window);
@@ -328,6 +335,23 @@ void processExit(GLFWwindow* window) {
 }
 
 void processInput(GLFWwindow* window, int key, std::function<void(void)> func) {
+    // 时间差越大，说明这帧渲染用时更多，需要增加速度来使用户体验相同
+    float cameraSpeed = 2.5f * deltaTime;
     if (glfwGetKey(window, key) == GLFW_PRESS)
         func();
+
+    // 摄像机移动控制
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        cameraPos += cameraSpeed * cameraFront;
+    } 
+    else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        // 正则化使左右移动速度相等
+        cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+    }
+    else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        cameraPos -= cameraSpeed * cameraFront;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+    }
 }

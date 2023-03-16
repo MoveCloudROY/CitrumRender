@@ -1,5 +1,6 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <glm/ext/matrix_transform.hpp>
 #include <glm/fwd.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -71,8 +72,6 @@ std::vector<float> vertices = {
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 };
 
-
-
 std::vector<unsigned int> indices {
     // 注意索引从0开始! 
     // 此例的索引(0,1,2,3)就是顶点数组vertices的下标，
@@ -80,6 +79,21 @@ std::vector<unsigned int> indices {
     0, 1, 3,
     1, 2, 3,
 };
+
+// 立方体位置
+std::vector<glm::vec3> cubePositions = {
+    glm::vec3( 0.0f,  0.0f,  0.0f),
+    glm::vec3( 2.0f,  5.0f, -15.0f),
+    glm::vec3(-1.5f, -2.2f, -2.5f), 
+    glm::vec3(-3.8f, -2.0f, -12.3f), 
+    glm::vec3( 2.4f, -0.4f, -3.5f), 
+    glm::vec3(-1.7f,  3.0f, -7.5f), 
+    glm::vec3( 1.3f, -2.0f, -2.5f), 
+    glm::vec3( 1.5f,  2.0f, -2.5f),
+    glm::vec3( 1.5f,  0.2f, -1.5f),
+    glm::vec3(-1.3f,  1.0f, -1.5f)
+};
+
 // clang-format on
 
 float alpha = 0.0;
@@ -119,35 +133,20 @@ int main(void) {
     // 如何从VBO解析顶点属性,并将状态保存到 VAO
     // '0' => Corresponding `location` in vertex shader Attribute value
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0); // position
-    // glVertexAttribPointer(
-    //     1,
-    //     3,
-    //     GL_FLOAT,
-    //     GL_FALSE,
-    //     10 * sizeof(float),
-    //     (void*)(3 * sizeof(float))
-    // ); // color
     glVertexAttribPointer(
-        1,
-        2,
-        GL_FLOAT,
-        GL_FALSE,
-        5 * sizeof(float),
+        1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
         (void*)(3 * sizeof(float))
     ); // texture_box
     glVertexAttribPointer(
-        2,
-        2,
-        GL_FLOAT,
-        GL_FALSE,
-        5 * sizeof(float),
+        2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
         (void*)(5 * sizeof(float))
     ); // texture_smile
+
     // 以顶点属性位置值作为参数，启用顶点属性
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
-    // glEnableVertexAttribArray(3);
+
     // 生成着色器程序对象
     Utils::Shader ourShader("../shaders/vs/shader.vs", "../shaders/fs/shader.fs");
 
@@ -171,15 +170,7 @@ int main(void) {
         stbi_load("../assets/container.jpg", &width, &height, &nrChannels, 0);
     if (texture1_data) {
         glTexImage2D(
-            GL_TEXTURE_2D,
-            0,
-            GL_RGB,
-            width,
-            height,
-            0,
-            GL_RGB,
-            GL_UNSIGNED_BYTE,
-            texture1_data
+            GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, texture1_data
         );
         glGenerateMipmap(GL_TEXTURE_2D);
     } else {
@@ -214,32 +205,30 @@ int main(void) {
         stbi_load("../assets/awesomeface.png", &width, &height, &nrChannels, 0);
     if (texture2_data) {
         glTexImage2D(
-            GL_TEXTURE_2D,
-            0,
-            GL_RGBA,
-            width,
-            height,
-            0,
-            GL_RGBA,
-            GL_UNSIGNED_BYTE,
-            texture2_data
+            GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture2_data
         );
         glGenerateMipmap(GL_TEXTURE_2D);
     } else {
         std::cout << "Failed to load texture" << std::endl;
     }
     stbi_image_free(texture2_data);
+
+    // 启用 Shader
     ourShader.use();
+    // 设置纹理坐标
     ourShader.setInt("texture_box", 0);
     ourShader.setInt("texture_smile", 1);
 
+
+    // 获取 MVP 变换矩阵
     glm::mat4 model{1.0f};
     model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
     glm::mat4 view{1.0f};
     view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-    
-    auto projection = glm::perspective(glm::radians(45.f), (float)width/(float)height, 0.1f, 100.f);
+
+    // 启用深度测试
+    glEnable(GL_DEPTH_TEST);
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window)) {
@@ -259,7 +248,12 @@ int main(void) {
         });
         /* Render here */
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        // 清理颜色和深度缓冲位
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        int screen_w, screen_h;
+        glfwGetFramebufferSize(window, &screen_w, &screen_h);
+        auto projection = glm::perspective(glm::radians(45.f), (float)screen_w / (float)screen_h, 0.1f, 100.f);
 
         // 使用 ShaderProgram
         ourShader.use();
@@ -271,19 +265,22 @@ int main(void) {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
-        float time_value = glfwGetTime() /600;
-
-        model = glm::rotate(model,time_value * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
-
-        ourShader.setMatrix4f("model", model);
         ourShader.setMatrix4f("view", view);
         ourShader.setMatrix4f("projection", projection);
+        for (std::size_t i = 0; i < 10; ++i) {
+            glm::mat4 model{1.0f};
+            model = glm::translate(model, cubePositions[i]);
+            float angle = 20.f * i;
+            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            ourShader.setMatrix4f("model", model);
+         
 
-        // //=========== Just Use VBO ===========//
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        //============= Use EBO! =============//
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+            // //=========== Just Use VBO ===========//
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+            //============= Use EBO! =============//
+            // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        }
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);

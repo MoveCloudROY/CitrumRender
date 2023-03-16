@@ -118,41 +118,40 @@ int main(void) {
 
     // 如何从VBO解析顶点属性,并将状态保存到 VAO
     // '0' => Corresponding `location` in vertex shader Attribute value
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)0); // position
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0); // position
+    // glVertexAttribPointer(
+    //     1,
+    //     3,
+    //     GL_FLOAT,
+    //     GL_FALSE,
+    //     10 * sizeof(float),
+    //     (void*)(3 * sizeof(float))
+    // ); // color
     glVertexAttribPointer(
         1,
-        3,
+        2,
         GL_FLOAT,
         GL_FALSE,
-        10 * sizeof(float),
+        5 * sizeof(float),
         (void*)(3 * sizeof(float))
-    ); // color
-    glVertexAttribPointer(
-        2,
-        2,
-        GL_FLOAT,
-        GL_FALSE,
-        10 * sizeof(float),
-        (void*)(6 * sizeof(float))
     ); // texture_box
     glVertexAttribPointer(
-        3,
+        2,
         2,
         GL_FLOAT,
         GL_FALSE,
-        10 * sizeof(float),
-        (void*)(8 * sizeof(float))
+        5 * sizeof(float),
+        (void*)(5 * sizeof(float))
     ); // texture_smile
     // 以顶点属性位置值作为参数，启用顶点属性
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
-    glEnableVertexAttribArray(3);
+    // glEnableVertexAttribArray(3);
     // 生成着色器程序对象
     Utils::Shader ourShader("../shaders/vs/shader.vs", "../shaders/fs/shader.fs");
 
     // 生成纹理
-
     unsigned int texture1, texture2;
     glGenTextures(1, &texture1);
     glGenTextures(1, &texture2);
@@ -272,9 +271,9 @@ int main(void) {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
-        float time_value = glfwGetTime() ;
+        float time_value = glfwGetTime() /600;
 
-        model = glm::rotate(model, time_value* glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+        model = glm::rotate(model,time_value * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
 
         ourShader.setMatrix4f("model", model);
         ourShader.setMatrix4f("view", view);

@@ -20,7 +20,7 @@ void main()
     // 原来第三个参数使用 alpha，但是笑脸透明部分为黑边
     // 修改为 color_smile.a * alpha 则正常
     // TODO: 仍然不知道为什么...
-    FragColor = mix(color_box, color_smile, color_smile.a * alpha);
+    FragColor = color_box;// mix(color_box, color_smile, color_smile.a * alpha);
 
     //**** HomeWork 1 ****//
     // FragColor = mix(texture(texture_box, TexCoordBox),texture(texture_smile, vec2(1.0 - TexCoordBox.x, TexCoordBox.y)),0.2);

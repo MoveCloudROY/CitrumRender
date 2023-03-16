@@ -2,6 +2,8 @@
 #define MY_SHADER_H__
 
 #include <GL/glew.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -20,6 +22,7 @@ public:
     void setInt(const std::string &name, int value) const;   
     void setFloat(const std::string &name, float value) const;
     void set3Float(const std::string &name, float a, float b, float c) const;
+    void setMatrix4f(const std::string &name, const glm::mat4& mat) const;
     
 public:
     // 程序ID

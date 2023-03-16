@@ -4,15 +4,15 @@
 
 namespace Utils {
 
-Shader::Shader(const char * vertexPath, const char * fragmentPath) {
+Shader::Shader(const char* vertexPath, const char* fragmentPath) {
     // 1. 读取文件
-    std::string vertexCode;
-    std::string fragmentCode;
+    std::string   vertexCode;
+    std::string   fragmentCode;
     std::ifstream vShaderFile;
     std::ifstream fShaderFile;
     // 保证ifstream对象可以抛出异常：
-    vShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
-    fShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+    vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     try {
         vShaderFile.open(vertexPath);
         fShaderFile.open(fragmentPath);
@@ -24,14 +24,14 @@ Shader::Shader(const char * vertexPath, const char * fragmentPath) {
         vShaderFile.close();
         fShaderFile.close();
 
-        vertexCode = vShaderStream.str();
+        vertexCode   = vShaderStream.str();
         fragmentCode = fShaderStream.str();
     } catch (std::ifstream::failure e) {
         std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
     }
     const char* vShaderCode = vertexCode.c_str();
     const char* fShaderCode = fragmentCode.c_str();
-    
+
     // 2. 编译 Shader
     int  success;
     char infoLog[512];
@@ -46,9 +46,9 @@ Shader::Shader(const char * vertexPath, const char * fragmentPath) {
         std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 
-    // 片段着色器
+    // 片段(const std::string &name, const glm::mat4& mat) const着色器
     fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1,&fShaderCode, NULL);
+    glShaderSource(fragmentShader, 1, &fShaderCode, NULL);
     glCompileShader(fragmentShader);
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
     if (!success) {
@@ -75,20 +75,25 @@ void Shader::use() {
     glUseProgram(ID);
 }
 
-void Shader::setBool(const std::string &name, bool value) const {
+void Shader::setBool(const std::string& name, bool value) const {
     glUniform1i(glGetUniformLocation(ID, name.c_str()), static_cast<int>(value));
 }
 
-void Shader::setInt(const std::string &name, int value) const {
+void Shader::setInt(const std::string& name, int value) const {
     glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
 }
 
-void Shader::setFloat(const std::string &name, float value) const {
+void Shader::setFloat(const std::string& name, float value) const {
     glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
 }
 
-void Shader::set3Float(const std::string &name, float a, float b, float c) const {
+void Shader::set3Float(const std::string& name, float a, float b, float c) const {
     glUniform3f(glGetUniformLocation(ID, name.c_str()), a, b, c);
 }
 
-} /* NAMESPACE `Utils` END */
+void Shader::setMatrix4f(const std::string& name, const glm::mat4& mat) const {
+    glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(mat));
+}
+
+
+} // namespace Utils

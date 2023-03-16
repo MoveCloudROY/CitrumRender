@@ -10,7 +10,8 @@ BasedOnStyle: LLVM
 AccessModifierOffset: -4
  
 # 左括号(左圆括号、左尖括号、左方括号)后的对齐: Align, DontAlign, AlwaysBreak(总是在左括号后换行)
-AlignAfterOpenBracket: Align
+AlignAfterOpenBracket: BlockIndent
+#Align
  
 # 连续赋值时，对齐所有等号
 AlignConsecutiveAssignments: true
@@ -35,7 +36,7 @@ AlignTrailingComments: true
  
 # 如果函数调用或带括号的初始化列表不适合全部在一行时
 # 允许将所有参数放到下一行，即使BinPackArguments为false
-AllowAllArgumentsOnNextLine: true
+AllowAllArgumentsOnNextLine: false
  
 # 允许构造函数的初始化参数放在下一行
 AllowAllConstructorInitializersOnNextLine: true
@@ -72,7 +73,7 @@ AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
  
 # 总是在template声明后换行
-AlwaysBreakTemplateDeclarations: false
+AlwaysBreakTemplateDeclarations: true
  
 # false表示函数实参要么都在同一行，要么都各自一行
 BinPackArguments: false
@@ -83,29 +84,29 @@ BinPackParameters: true
 # 大括号换行，只有当 BreakBeforeBraces 设置为Custom时才有效
 BraceWrapping:
   # case 语句后面
-  AfterCaseLabel: true
+  AfterCaseLabel: false
   # class定义后面
-  AfterClass: true
+  AfterClass: false
   # 控制语句后面
-  AfterControlStatement: true
+  AfterControlStatement: false
   # enum定义后面
   AfterEnum: false
   # 函数定义后面
-  AfterFunction: true
+  AfterFunction: false
   # 命名空间定义后面
   AfterNamespace: false
   # ObjC定义后面
   AfterObjCDeclaration: false
   # struct定义后面
-  AfterStruct: true
+  AfterStruct: false
   # union定义后面
   AfterUnion: false
   # extern 导出块后面
   AfterExternBlock: false
   # catch之前
-  BeforeCatch: true
+  BeforeCatch: false
   # else之前
-  BeforeElse: true
+  BeforeElse: false
   # 缩进大括号(整个大括号框起来的部分都缩进)
   IndentBraces: false
   # 空函数的大括号是否可以在一行
@@ -145,7 +146,7 @@ ColumnLimit: 100
 CompactNamespaces: false
  
 # 构造函数的初始化列表要么都在同一行，要么都各自一行
-ConstructorInitializerAllOnOneLineOrOnePerLine: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
  
 # 构造函数的初始化列表的缩进宽度
 ConstructorInitializerIndentWidth:  4
@@ -242,10 +243,10 @@ PenaltyReturnTypeOnItsOwnLine: 120
 PointerAlignment: Left
  
 # 允许重新排版注释
-ReflowComments: true
+ReflowComments: false
  
 # 允许排序#include
-SortIncludes: true
+SortIncludes: false
  
 # 允许排序 using 声明顺序
 SortUsingDeclarations: false
@@ -257,7 +258,7 @@ SpaceAfterCStyleCast: false
 SpaceAfterLogicalNot: false
  
 # 在 template 关键字后插入一个空格
-SpaceAfterTemplateKeyword: false
+SpaceAfterTemplateKeyword: true
  
 # 定义在什么情况下在指针限定符之前或之后放置空格
 # SpaceAroundPointerQualifiers: Before

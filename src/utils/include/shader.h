@@ -1,5 +1,5 @@
-#ifndef MY_SHADER_H__
-#define MY_SHADER_H__
+#ifndef EG_SHADER_H__
+#define EG_SHADER_H__
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -32,4 +32,4 @@ public:
 
 }
 
-#endif /* MY_SHADER_H__ */
+#endif /* EG_SHADER_H__ */

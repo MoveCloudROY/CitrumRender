@@ -1,5 +1,5 @@
-#ifndef TODO_H__
-#define TODO_H__
+#ifndef EG_TODO_H__
+#define EG_TODO_H__
 
 #include <iostream> 
 #include <string>
@@ -101,4 +101,4 @@ namespace Task {
 	}
 }
 
-#endif
+#endif /* EG_TODO_H__ */

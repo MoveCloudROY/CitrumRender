@@ -1,5 +1,5 @@
-#ifndef MY_DATA_H__
-#define MY_DATA_H__
+#ifndef EG_DATA_H__
+#define EG_DATA_H__
 
 #include <GL/glew.h>
 #include <vector>
@@ -9,4 +9,4 @@ namespace Utils {
     void createEBO(const std::vector<unsigned int>& indices);
 }
 
-#endif /* MY_DATA_H__ */
+#endif /* EG_DATA_H__ */

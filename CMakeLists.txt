@@ -17,11 +17,10 @@ find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
-add_subdirectory(src)
+add_subdirectory(3rdparty)
 add_subdirectory(test)
+add_subdirectory(src)
 
-target_include_directories(${PROJECT_NAME} PUBLIC 3rdparty)
-target_include_directories(${PROJECT_NAME} PUBLIC src)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC=)
 

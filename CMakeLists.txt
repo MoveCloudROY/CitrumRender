@@ -1,13 +1,9 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(OpenGL VERSION 0.1.0)
 
-include(CTest)
-enable_testing()
-
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 
 if (POLICY CMP0072)
     set(OpenGL_GL_PREFERENCE GLVND)
@@ -21,20 +17,11 @@ find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
-add_subdirectory(utils)
+add_subdirectory(src)
+add_subdirectory(test)
 
-add_executable(${PROJECT_NAME} main.cpp)
-
-target_link_libraries(${PROJECT_NAME} OpenGL::GL)
-target_link_libraries(${PROJECT_NAME} glfw)
-target_link_libraries(${PROJECT_NAME} GLEW::GLEW)
-
-target_link_libraries(${PROJECT_NAME} utils)
-
-
-# target_compile_options(${PROJECT_NAME}  PRIVATE -fno-omit-frame-pointer)
-# target_compile_options(${PROJECT_NAME}  PRIVATE -fsanitize=address)
-# target_link_options(${PROJECT_NAME}  PRIVATE -fsanitize=address)
+target_include_directories(${PROJECT_NAME} PUBLIC 3rdparty)
+target_include_directories(${PROJECT_NAME} PUBLIC src)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC=)
 

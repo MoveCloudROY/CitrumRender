@@ -18,3 +18,20 @@ set(STB_INC_PATH "${STB_LIB_NAME}/include")
 
 add_library(${STB_LIB_NAME} STATIC ${STB_SRC_PATH}/stb_image.cpp)
 target_include_directories(${STB_LIB_NAME} PUBLIC ${STB_INC_PATH})
+
+
+set(IMGUI_LIB_NAME "imgui")
+set(IMGUI_SRC_PATH "${IMGUI_LIB_NAME}")
+set(IMGUI_INC_PATH "${IMGUI_LIB_NAME}")
+set(IMGUI_DIR "${LIB_DIR}/imgui")
+
+add_library(${IMGUI_LIB_NAME} STATIC "${IMGUI_SRC_PATH}/imgui.cpp"
+                  "${IMGUI_SRC_PATH}/imgui_demo.cpp"
+                  "${IMGUI_SRC_PATH}/imgui_draw.cpp"
+                  "${IMGUI_SRC_PATH}/imgui_tables.cpp"
+                  "${IMGUI_SRC_PATH}/imgui_widgets.cpp"
+                  
+                  "${IMGUI_SRC_PATH}/backends/imgui_impl_glfw.cpp"
+                  "${IMGUI_SRC_PATH}/backends/imgui_impl_opengl3.cpp")
+
+target_include_directories(${IMGUI_LIB_NAME} PUBLIC "${IMGUI_INC_PATH}")

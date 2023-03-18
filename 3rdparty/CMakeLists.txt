@@ -6,6 +6,9 @@ add_subdirectory(${SPDLOG_LIB_NAME})
 set(DOCTEST_LIB_NAME "doctest")
 add_subdirectory(${DOCTEST_LIB_NAME})
 
+set(GLFW_LIB_NAME "glfw")
+add_subdirectory(${GLFW_LIB_NAME})
+
 set(GLM_LIB_NAME "glm")
 add_subdirectory(${GLM_LIB_NAME})
 

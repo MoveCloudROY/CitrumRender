@@ -33,6 +33,7 @@
 
 /build
 /.cache
+imgui.ini
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles

@@ -522,11 +522,11 @@ void renderMainImGui(unsigned int colorBuffer)
     ImGui::Begin("GameWindow");
     {
         ImGui::SetNextWindowSize(ImVec2(400, 300));
-        // ImGui::BeginChild("GameRender");
-        // ImVec2 wsize = ImGui::GetWindowSize();
+        ImGui::BeginChild("GameRender");
+        ImVec2 wsize = ImGui::GetWindowSize();
         // spdlog::info("wize = ({}, {})", wsize.x, wsize.y);
-        ImGui::Image((ImTextureID)colorBuffer, ImVec2(400, 300), ImVec2(0, 1), ImVec2(1, 0));        //自定义GUI内容
-        // ImGui::EndChild();
+        ImGui::Image((ImTextureID)(unsigned long)colorBuffer, wsize, ImVec2(0, 1), ImVec2(1, 0));        //自定义GUI内容
+        ImGui::EndChild();
     }
     ImGui::End();
 

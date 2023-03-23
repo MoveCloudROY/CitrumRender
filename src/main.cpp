@@ -38,6 +38,7 @@ void scroll_callback(GLFWwindow* window, double xOffset, double yOffset);
 void mouse_button_callback(GLFWwindow * window, int button, int action, int mods);
 void processExit(GLFWwindow* window);
 void processInput(GLFWwindow* window, int key, std::function<void(void)> func);
+void renderMainImGui(unsigned int texColorBuffer);
 
 // clang-format off
 std::vector<float> vertices = {
@@ -104,6 +105,17 @@ std::vector<glm::vec3> cubePositions = {
     glm::vec3( 1.5f,  2.0f, -2.5f),
     glm::vec3( 1.5f,  0.2f, -1.5f),
     glm::vec3(-1.3f,  1.0f, -1.5f)
+};
+
+std::vector<float> quadVertices = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
+    // positions           // texCoords
+    -1.0f,  1.0f,  0.0f, 1.0f,
+    -1.0f, -1.0f,  0.0f, 0.0f,
+    1.0f, -1.0f,  1.0f, 0.0f,
+
+    -1.0f,  1.0f,  0.0f, 1.0f,
+    1.0f, -1.0f,  1.0f, 0.0f,
+    1.0f,  1.0f,  1.0f, 1.0f
 };
 
 // clang-format on
@@ -174,19 +186,6 @@ int main(void) {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
-
-    // Our state
-    bool show_demo_window = true;
-    bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
 
     // OpenGL 版本号输出
     std::cout << glGetString(GL_VERSION) << std::endl;
@@ -216,8 +215,18 @@ int main(void) {
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
 
+     // 屏幕 VAO
+    unsigned int quadVAO = Utils::createVAO(quadVertices);
+    
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
+
     // 生成着色器程序对象
-    Utils::Shader ourShader("./src/shaders/vs/shader.vs", "./src/shaders/fs/shader.fs");
+    Utils::Shader gameShader("./src/shaders/vs/shader.vs", "./src/shaders/fs/shader.fs");
+    Utils::Shader applicationShader("./src/shaders/vs/application.vs", "./src/shaders/fs/application.fs");
 
     // 生成纹理
     unsigned int texture1, texture2;
@@ -278,11 +287,50 @@ int main(void) {
     }
     stbi_image_free(texture2_data);
 
-    // 启用 Shader
-    ourShader.use();
+    // Shader 配置
+    gameShader.use();
     // 设置纹理坐标
-    ourShader.setInt("texture_box", 0);
-    ourShader.setInt("texture_smile", 1);
+    gameShader.setInt("texture_box", 0);
+    gameShader.setInt("texture_smile", 1);
+
+    applicationShader.use();
+    applicationShader.setInt("screenTexture", 0);
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsLight();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+
+    // 创建帧缓冲
+    unsigned int gameWindowFbo;
+    glGenFramebuffers(1, &gameWindowFbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, gameWindowFbo);
+
+    unsigned int texColorBuffer;
+    glGenTextures(1, &texColorBuffer);
+    glBindTexture(GL_TEXTURE_2D, texColorBuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBuffer, 0);
+
+    unsigned int rbo;
+    glGenRenderbuffers(1, &rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, WIDTH, HEIGHT);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
     // 启用深度测试
@@ -298,52 +346,8 @@ int main(void) {
     while (!glfwWindowShouldClose(window))
 #endif
     {
-        
         /* Poll for and process events */
         glfwPollEvents();
-
-        // Start the Dear ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
-
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-        {
-            static float f = 0.0f;
-            static int counter = 0;
-
-            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
-
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-            ImGui::End();
-        }
-
-        // 3. Show another simple window.
-        if (show_another_window)
-        {
-            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
-            ImGui::End();
-        }
-
 
         processExit(window);
         //** HomeWork T4 **//
@@ -351,19 +355,21 @@ int main(void) {
             alpha -= 0.005f;
             if (alpha <= 1e-7)
                 alpha = 0.0f;
-            ourShader.setFloat("alpha", alpha);
+            gameShader.setFloat("alpha", alpha);
         });
         processInput(window, GLFW_KEY_UP, [&]() {
             alpha += 0.005f;
             if (alpha > 1.0f)
                 alpha = 1.0f;
-            ourShader.setFloat("alpha", alpha);
+            gameShader.setFloat("alpha", alpha);
         });
+
+        glBindFramebuffer(GL_FRAMEBUFFER, gameWindowFbo); // 帧缓冲
         /* Render here */
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         // 清理颜色和深度缓冲位
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+        
         int screenW, screenH;
         glfwGetFramebufferSize(window, &screenW, &screenH);
 
@@ -371,7 +377,7 @@ int main(void) {
         auto projection = glm::perspective(glm::radians(camera.m_zoom), (float)screenW / (float)screenH, 0.1f, 100.f);
 
         // 使用 ShaderProgram
-        ourShader.use();
+        gameShader.use();
         // 绑定 VAO
         glBindVertexArray(VAO);
         // 绑定纹理
@@ -380,10 +386,12 @@ int main(void) {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
+        glEnable(GL_DEPTH_TEST);
+
         glm::mat4 view = camera.GetViewMatrix();
 
-        ourShader.setMatrix4f("view", view);
-        ourShader.setMatrix4f("projection", projection);
+        gameShader.setMatrix4f("view", view);
+        gameShader.setMatrix4f("projection", projection);
 
         for (std::size_t i = 0; i < 10; ++i) {
             // 创建模型矩阵 (MVP - Model)
@@ -395,7 +403,7 @@ int main(void) {
             else
                 angle = 0;
             model = glm::rotate(model, glm::radians(angle) * (float)glfwGetTime(), glm::vec3(1.0f, 0.3f, 0.5f));
-            ourShader.setMatrix4f("model", model);
+            gameShader.setMatrix4f("model", model);
 
             // //=========== Just Use VBO ===========//
             glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -404,13 +412,22 @@ int main(void) {
             // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         }
 
-        // Rendering
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        glBindFramebuffer(GL_FRAMEBUFFER, 0); // 返回默认帧缓冲
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
+        glClear(GL_COLOR_BUFFER_BIT);
+        applicationShader.use();
+        glDisable(GL_DEPTH_TEST);
+        glBindVertexArray(quadVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texColorBuffer);
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glDrawArrays(GL_TRIANGLES, 0, 6);  
 
+        renderMainImGui(texColorBuffer);
+
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
-
 
         // 计算每帧用时和时间差
         float currentFrameTime = glfwGetTime();
@@ -425,6 +442,8 @@ int main(void) {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+
+    glDeleteFramebuffers(1, &gameWindowFbo);
 
     glfwDestroyWindow(window);
     glfwTerminate();
@@ -458,8 +477,8 @@ void mouse_button_callback(GLFWwindow * window, int button, int action, int mods
     if (hiddenCursor == false) {
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && glfwGetWindowAttrib(window, GLFW_HOVERED)) {
             spdlog::info("Hidden Cursor due to click window");
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            hiddenCursor = true;
+            // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            // hiddenCursor = true;
         }
     }
 }
@@ -492,4 +511,24 @@ void processInput(GLFWwindow* window, int key, std::function<void(void)> func) {
         camera.ProcessKeyboard(Camera::Movement::RIGHT, deltaTime);
     }
     
+}
+
+void renderMainImGui(unsigned int colorBuffer)
+{
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    ImGui::Begin("GameWindow");
+    {
+        ImGui::SetNextWindowSize(ImVec2(400, 300));
+        // ImGui::BeginChild("GameRender");
+        // ImVec2 wsize = ImGui::GetWindowSize();
+        // spdlog::info("wize = ({}, {})", wsize.x, wsize.y);
+        ImGui::Image((ImTextureID)colorBuffer, ImVec2(400, 300), ImVec2(0, 1), ImVec2(1, 0));        //自定义GUI内容
+        // ImGui::EndChild();
+    }
+    ImGui::End();
+
+    ImGui::Render();
 }

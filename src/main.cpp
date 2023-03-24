@@ -28,9 +28,10 @@
 #include <todo.h>
 #include <camera.h>
 
-
-constexpr int WIDTH  = 800;
-constexpr int HEIGHT = 600;
+constexpr int AppWindowWidth  = 1920;
+constexpr int AppWindowHeight = 1080;
+int gameWindowWidth  = 800;
+int gameWindowHeight = 600;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -127,7 +128,7 @@ float alpha = 0.0;
 float     deltaTime     = 0.0f; // 当前帧和上一帧的时间差
 float     lastFrameTime = 0.0f; // 上一帧的时间
 
-float lastX = (float)WIDTH / 2.f, lastY = (float)HEIGHT / 2.f;
+float lastX = (float)gameWindowWidth / 2.f, lastY = (float)gameWindowHeight / 2.f;
 
 Utils::Camera camera{glm::vec3{0.f, 0.f, 3.f}};
 
@@ -164,7 +165,7 @@ int main(void) {
 #endif
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(WIDTH, HEIGHT, "LearnOpenGL", NULL, NULL);
+    window = glfwCreateWindow(AppWindowWidth, AppWindowHeight, "LearnOpenGL", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -183,15 +184,17 @@ int main(void) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;   // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;    // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;       // Enable Docking Windows
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;     // Enable Multi Viewports
 
 
     // OpenGL 版本号输出
     std::cout << glGetString(GL_VERSION) << std::endl;
     // 设置视口大小
-    glViewport(0, 0, WIDTH, HEIGHT);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glViewport(0, 0, gameWindowWidth, gameWindowHeight);
+    // glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     // 隐藏鼠标
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     // 设置鼠标事件监听函数
@@ -299,6 +302,13 @@ int main(void) {
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsLight();
+    ImGuiStyle& style = ImGui::GetStyle();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
+
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -312,7 +322,7 @@ int main(void) {
     unsigned int texColorBuffer;
     glGenTextures(1, &texColorBuffer);
     glBindTexture(GL_TEXTURE_2D, texColorBuffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gameWindowWidth, gameWindowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -323,7 +333,7 @@ int main(void) {
     unsigned int rbo;
     glGenRenderbuffers(1, &rbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, WIDTH, HEIGHT);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, gameWindowWidth, gameWindowHeight);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
@@ -369,12 +379,9 @@ int main(void) {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         // 清理颜色和深度缓冲位
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
-        int screenW, screenH;
-        glfwGetFramebufferSize(window, &screenW, &screenH);
-
+    
         // 创建投影矩阵 (MVP - Projection)
-        auto projection = glm::perspective(glm::radians(camera.m_zoom), (float)screenW / (float)screenH, 0.1f, 100.f);
+        auto projection = glm::perspective(glm::radians(camera.m_zoom), (float)gameWindowWidth / (float)gameWindowHeight, 0.1f, 100.f);
 
         // 使用 ShaderProgram
         gameShader.use();
@@ -415,17 +422,25 @@ int main(void) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0); // 返回默认帧缓冲
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
         glClear(GL_COLOR_BUFFER_BIT);
-        applicationShader.use();
-        glDisable(GL_DEPTH_TEST);
-        glBindVertexArray(quadVAO);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texColorBuffer);
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glDrawArrays(GL_TRIANGLES, 0, 6);  
+        // applicationShader.use();
+        // glDisable(GL_DEPTH_TEST);
+        // glBindVertexArray(quadVAO);
+        // glActiveTexture(GL_TEXTURE0);
+        // glBindTexture(GL_TEXTURE_2D, texColorBuffer);
+        // // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        // glDrawArrays(GL_TRIANGLES, 0, 6);  
 
         renderMainImGui(texColorBuffer);
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            GLFWwindow* backup_current_context = glfwGetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            glfwMakeContextCurrent(backup_current_context);
+        }
+
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
 
@@ -518,17 +533,54 @@ void renderMainImGui(unsigned int colorBuffer)
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+    float menuHeight = 0;
+    ImGui::BeginMainMenuBar();
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            ImGui::Button("test");
+            ImGui::EndMenu();
+        }
 
-    ImGui::Begin("GameWindow");
+        float button_height = 20;
+        float button_width = 60;
+        ImGui::SameLine();
+        ImGui::Button("Button", ImVec2(button_width, button_height));
+        menuHeight = ImGui::GetFrameHeight();
+    }
+    ImGui::EndMainMenuBar();
+    ImGui::DockSpaceOverViewport();
+    ImGui::Begin("Object Lists");
+    {
+        ImGui::Text("Object Occupy");
+    }
+    ImGui::End();
+
+    ImGui::Begin("Game Window");
     {
         ImGui::SetNextWindowSize(ImVec2(400, 300));
         ImGui::BeginChild("GameRender");
-        ImVec2 wsize = ImGui::GetWindowSize();
+        auto ret = ImGui::GetWindowSize();
+        gameWindowWidth = ret.x;
+        gameWindowHeight = ret.y;
         // spdlog::info("wize = ({}, {})", wsize.x, wsize.y);
-        ImGui::Image((ImTextureID)(unsigned long)colorBuffer, wsize, ImVec2(0, 1), ImVec2(1, 0));        //自定义GUI内容
+        ImGui::Image((ImTextureID)(unsigned long)colorBuffer, ret, ImVec2(0, 1), ImVec2(1, 0));        //自定义GUI内容
         ImGui::EndChild();
     }
     ImGui::End();
 
+    ImGui::Begin("Assets");
+    {
+        ImGui::Text("Assets Occupy");
+    }
+    ImGui::End();
+
+    ImGui::Begin("Config");
+    {
+        ImGui::Text("Config Occupy");
+    }
+    ImGui::End();
+
+    
     ImGui::Render();
 }

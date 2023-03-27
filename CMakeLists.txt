@@ -17,12 +17,13 @@ find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
 add_subdirectory(3rdparty)
-add_subdirectory(test)
 add_subdirectory(src)
+add_subdirectory(test)
+
 
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC=)
 
-set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-include(CPack)
+# set(CPACK_PROJECT_NAME ${PROJECT_NAME})
+# set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
+# include(CPack)

@@ -1,4 +1,4 @@
-#include "../include/editor/Layer.h"
+#include "editor/Layer.h"
 
 namespace EG {
 

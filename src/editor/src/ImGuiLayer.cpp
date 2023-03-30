@@ -1,4 +1,4 @@
-#include "../include/editor/imgui/ImGuiLayer.h"
+#include "editor/imgui/ImGuiLayer.h"
 
 namespace EG {
 

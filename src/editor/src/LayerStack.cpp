@@ -1,4 +1,4 @@
-#include "../include/editor/LayerStack.h"
+#include "editor/LayerStack.h"
 
 #include <algorithm>
 

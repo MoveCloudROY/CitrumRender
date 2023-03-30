@@ -15,6 +15,7 @@ target_link_libraries(${PROJECT_NAME}
             stb
             spdlog
             imgui
+            editor
 )
 
 # target_compile_options(${PROJECT_NAME}  PRIVATE -fno-omit-frame-pointer)

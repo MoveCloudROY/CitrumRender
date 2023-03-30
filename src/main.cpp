@@ -28,6 +28,8 @@
 #include <todo.h>
 #include <camera.h>
 
+#include <editor/events/KeyEvents.h>
+
 constexpr int AppWindowWidth  = 1920;
 constexpr int AppWindowHeight = 1080;
 int gameWindowWidth  = 800;

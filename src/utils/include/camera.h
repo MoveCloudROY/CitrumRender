@@ -41,6 +41,10 @@ public:
     void ProcessMouseMovement(float xOffset, float yOffset, GLboolean constrainPitch = true);
     // 鼠标滚轮控制摄像机镜头缩放
     void ProcessMouseScroll(float yOffset);
+    // 启用鼠标绑定
+    void AttachMouse();
+    // 取消鼠标和摄像机的绑定，并暂存鼠标位置
+    void DetachMouse();
 
 private:
     // 通过欧拉角计算相机朝向向量，同时更新 m_right 和 m_up
@@ -75,6 +79,10 @@ private:
     static constexpr const float SPEED       = 2.5f;
     static constexpr const float SENSITIVITY = 0.1f;
     static constexpr const float ZOOM        = 45.f;
+
+
+    // 鼠标相机分离
+    bool isMouseAttached;
 };
 
 } // namespace Utils

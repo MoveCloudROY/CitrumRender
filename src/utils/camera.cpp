@@ -59,6 +59,8 @@ glm::mat4 Camera::GetViewMatrix() {
 
 // 键盘控制摄像机
 void Camera::ProcessKeyboard(Movement direction, float deltaTime) {
+    if (!isMouseAttached)
+        return;
     // 时间差越大，说明这帧渲染用时更多，需要增加速度来使用户体验相同
     float v = m_movementSpeed * deltaTime;
 
@@ -84,6 +86,8 @@ void Camera::ProcessKeyboard(Movement direction, float deltaTime) {
 
 // 鼠标控制摄像机俯仰/偏航角
 void Camera::ProcessMouseMovement(float xOffset, float yOffset, GLboolean constrainPitch) {
+    if (!isMouseAttached)
+        return;
     xOffset *= m_mouseSensitivity;
     yOffset *= m_mouseSensitivity;
 
@@ -97,11 +101,23 @@ void Camera::ProcessMouseMovement(float xOffset, float yOffset, GLboolean constr
 
 // 鼠标滚轮控制摄像机镜头缩放
 void Camera::ProcessMouseScroll(float yOffset) {
+    if (!isMouseAttached)
+        return;
     m_zoom -= yOffset;
     if (m_zoom < 1.0f)
         m_zoom = 1.0f;
     if (m_zoom > 45.0f)
         m_zoom = 45.0f;
+}
+
+// 启用鼠标绑定
+void Camera::AttachMouse() {
+    isMouseAttached = true;
+}
+
+// 取消鼠标和摄像机的绑定，并暂存鼠标位置
+void Camera::DetachMouse() {
+    isMouseAttached = false;
 }
 
 // 通过欧拉角计算相机朝向向量，同时更新 m_right 和 m_up

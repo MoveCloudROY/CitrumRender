@@ -1,4 +1,5 @@
 #include <glm/ext/vector_float3.hpp>
+#include <glm/matrix.hpp>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -45,48 +46,49 @@ void processCamera(GLFWwindow* window);
 void renderMainImGui(GLFWwindow* window, unsigned int texColorBuffer);
 
 // clang-format off
+
 std::vector<float> vertices = {
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f, 0.0f,  0.0f, -1.0f,0.0f, 0.0f,
+    0.5f, -0.5f, -0.5f, 0.0f,  0.0f, -1.0f,    1.0f, 0.0f,
+    0.5f,  0.5f, -0.5f, 0.0f,  0.0f, -1.0f, 1.0f, 1.0f,
+    0.5f,  0.5f, -0.5f, 0.0f,  0.0f, -1.0f, 1.0f, 1.0f,
+-0.5f,  0.5f, -0.5f, 0.0f,  0.0f, -1.0f,   0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f, 0.0f,  0.0f, -1.0f, 0.0f, 0.0f,
 
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f,
+    0.5f, -0.5f,  0.5f, 0.0f,  0.0f, 1.0f, 1.0f, 0.0f,
+    0.5f,  0.5f,  0.5f, 0.0f,  0.0f, 1.0f, 1.0f, 1.0f,
+    0.5f,  0.5f,  0.5f, 0.0f,  0.0f, 1.0f, 1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f, 0.0f,  0.0f, 1.0f, 0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f,
 
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f,
 
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    0.5f,  0.5f,  0.5f, 1.0f,  0.0f,  0.0f,    1.0f, 0.0f,
+    0.5f,  0.5f, -0.5f, 1.0f,  0.0f,  0.0f,    1.0f, 1.0f,
+    0.5f, -0.5f, -0.5f, 1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
+    0.5f, -0.5f, -0.5f, 1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
+    0.5f, -0.5f,  0.5f, 1.0f,  0.0f,  0.0f, 0.0f, 0.0f,
+    0.5f,  0.5f,  0.5f, 1.0f,  0.0f,  0.0f, 1.0f, 0.0f,
 
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f,
+    0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f,
+    0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f,
+    0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f,
 
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+    -0.5f,  0.5f, -0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 1.0f,
+    0.5f,  0.5f, -0.5f, 0.0f,  1.0f,  0.0f, 1.0f, 1.0f,
+    0.5f,  0.5f,  0.5f, 0.0f,  1.0f,  0.0f, 1.0f, 0.0f,
+    0.5f,  0.5f,  0.5f, 0.0f,  1.0f,  0.0f, 1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 1.0f
 };
 
 std::vector<unsigned int> indices {
@@ -111,7 +113,8 @@ std::vector<float> quadVertices = { // vertex attributes for a quad that fills t
 
 // clang-format on
 
-glm::vec3 lightPos = {1.4f, 1.f, -1.2f};
+glm::vec3 lightPos   = {1.4f, 1.f, -1.2f};
+glm::vec3 lightColor = {1.0f, 1.0f, 1.0f};
 
 bool hiddenCursor = false;
 
@@ -199,16 +202,18 @@ int main(void) {
 
     // 从 VBO 解析顶点属性,并将状态保存到 VAO
     // '0' => Corresponding `location` in vertex shader Attribute value
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);                   // position
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float))); // texture_box
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);                   // position
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))); // normal
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float))); // texture_box
 
     // 以顶点属性位置值作为参数，启用顶点属性
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
 
     // 创建光源 VAO & VBO
     unsigned int lightBlockVAO = Utils::createVAO(vertices);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0); // position
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // position
     glEnableVertexAttribArray(0);
 
     // 屏幕 VAO
@@ -273,10 +278,21 @@ int main(void) {
     gameShader.use();
     // 设置纹理坐标
     gameShader.setInt("texture_box", 0);
+    gameShader.setVec3f("lightColor", lightColor);
+
+    gameShader.setVec3f("material.ambient", glm::vec3{1.0f, 0.5f, 0.31f});
+    gameShader.setVec3f("material.diffuse", glm::vec3{1.0f, 0.5f, 0.31f});
+    gameShader.setVec3f("material.specular", glm::vec3{0.5f, 0.5f, 0.5f});
+    gameShader.setFloat("material.shininess", 5.0f);
+
+    gameShader.setVec3f("light.position", lightPos);
+    gameShader.setVec3f("light.ambient", glm::vec3{0.2f, 0.2f, 0.2f});
+    gameShader.setVec3f("light.diffuse", glm::vec3{0.5f, 0.5f, 0.5f}); // 将光照调暗了一些以搭配场景
+    gameShader.setVec3f("light.specular", glm::vec3{1.0f, 1.0f, 1.0f});
 
     // 光照 Shader
     lightShader.use();
-    lightShader.set3Float("lightColor", 1.0f, 1.0f, 1.0f);
+    lightShader.setVec3f("lightColor", lightColor);
 
     applicationShader.use();
     applicationShader.setInt("screenTexture", 0);
@@ -367,6 +383,19 @@ int main(void) {
         float     angle{0};
         // model = glm::rotate(model, glm::radians(angle) * (float)glfwGetTime(), glm::vec3(1.0f, 0.3f, 0.5f));
         gameShader.setMatrix4f("model", model);
+        gameShader.setMatrix3f("normalMat", glm::transpose(glm::inverse(glm::mat3{model})));
+
+        gameShader.setVec3f("viewPos", camera.m_position);
+
+        lightColor.x = sin(glfwGetTime() * 2.0f);
+        lightColor.y = sin(glfwGetTime() * 0.7f);
+        lightColor.z = sin(glfwGetTime() * 1.3f);
+
+        glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);   // 降低影响
+        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // 很低的影响
+
+        gameShader.setVec3f("light.ambient", ambientColor);
+        gameShader.setVec3f("light.diffuse", diffuseColor);
 
         // 绑定 VAO
         glBindVertexArray(VAO);
@@ -389,6 +418,8 @@ int main(void) {
         mlight = glm::scale(mlight, glm::vec3{0.4});
 
         lightShader.setMatrix4f("model", mlight);
+
+        lightShader.setVec3f("lightColor", lightColor);
 
         glBindVertexArray(lightBlockVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);

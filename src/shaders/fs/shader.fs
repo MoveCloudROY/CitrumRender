@@ -13,6 +13,33 @@ struct Material {
 
 struct Light {
     vec3 position;
+    vec3 direction;
+    float cutOff;
+    float outCutOff;
+
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+
+    float constant;
+    float linear;
+    float quadratic;
+};
+
+struct PointLight {
+    vec3 position;
+
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+
+    float constant;
+    float linear;
+    float quadratic;
+};
+
+struct ParallelLight {
+    vec3 direction;
 
     vec3 ambient;
     vec3 diffuse;
@@ -30,20 +57,39 @@ void main()
     vec4 diffuseSample = texture(material.diffuse, TexCoord);
     vec4 specularSample = texture(material.specular, TexCoord);
 
-    // ambient item
-    vec3 ambient = light.ambient * vec3(diffuseSample);
+    float dist = length(light.position - FragPos);
+    float attenuation = 1.0 / (light.constant + light.linear * dist +  light.quadratic * dist * dist);
 
-    // diffuse item
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(light.position - FragPos);
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * diff * vec3(diffuseSample);
-
     vec3 cameraDir = normalize(viewPos - FragPos);
     vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(cameraDir, reflectDir), 0.0), material.shininess);
-    vec3 specular = light.specular * spec * vec3(specularSample);
 
-    vec3 result = ambient + diffuse + specular;
-    FragColor = vec4(result, 1.0);
+    float theta = dot(normalize(-light.direction), lightDir);
+    float intensity = clamp((theta - light.outCutOff) / (light.cutOff - light.outCutOff), 0.0, 1.0);
+
+    if (theta > light.outCutOff) {
+        // ambient item
+        vec3 ambient = light.ambient * vec3(diffuseSample);
+
+        // diffuse item
+        
+        float diff = max(dot(norm, lightDir), 0.0);
+        vec3 diffuse = light.diffuse * diff * vec3(diffuseSample);
+
+        float spec = pow(max(dot(cameraDir, reflectDir), 0.0), material.shininess);
+        vec3 specular = light.specular * spec * vec3(specularSample);
+
+        // ambient should not be affected by the attenuation.
+        // ambient  *= attenuation; 
+        diffuse  *= attenuation * intensity;
+        specular *= attenuation * intensity;
+
+        vec3 result = ambient + diffuse + specular;
+        FragColor = vec4(result, 1.0);
+    } else {
+        FragColor = vec4(light.ambient * vec3(diffuseSample), 1.0);
+    }
+
+
 }

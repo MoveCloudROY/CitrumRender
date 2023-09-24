@@ -100,6 +100,18 @@ std::vector<unsigned int> indices {
     1, 2, 3,
 };
 
+glm::vec3 cubePositions[] = {
+    glm::vec3( 0.0f,  0.0f,  0.0f),
+    glm::vec3( 2.0f,  5.0f, -15.0f),
+    glm::vec3(-1.5f, -2.2f, -2.5f),
+    glm::vec3(-3.8f, -2.0f, -12.3f),
+    glm::vec3( 2.4f, -0.4f, -3.5f),
+    glm::vec3(-1.7f,  3.0f, -7.5f),
+    glm::vec3( 1.3f, -2.0f, -2.5f),
+    glm::vec3( 1.5f,  2.0f, -2.5f),
+    glm::vec3( 1.5f,  0.2f, -1.5f),
+    glm::vec3(-1.3f,  1.0f, -1.5f)
+};
 
 std::vector<float> quadVertices = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
     // positions           // texCoords
@@ -249,9 +261,13 @@ int main(void) {
     gameShader.setFloat("material.shininess", 5.0f);
 
     gameShader.setVec3f("light.position", lightPos);
+    // gameShader.setVec3f("light.direction", glm::vec3{-0.2f, -1.0f, -0.3f});
     gameShader.setVec3f("light.ambient", glm::vec3{0.2f, 0.2f, 0.2f});
     gameShader.setVec3f("light.diffuse", glm::vec3{0.5f, 0.5f, 0.5f}); // 将光照调暗了一些以搭配场景
     gameShader.setVec3f("light.specular", glm::vec3{1.0f, 1.0f, 1.0f});
+    gameShader.setFloat("light.constant", 1.0f);
+    gameShader.setFloat("light.linear", 0.07f);
+    gameShader.setFloat("light.quadratic", 0.017f);
 
     // 光照 Shader
     lightShader.use();
@@ -342,13 +358,13 @@ int main(void) {
         gameShader.setMatrix4f("projection", projection);
 
         // 创建模型矩阵 (MVP - Model)
-        glm::mat4 model{1.0f};
-        float     angle{0};
-        // model = glm::rotate(model, glm::radians(angle) * (float)glfwGetTime(), glm::vec3(1.0f, 0.3f, 0.5f));
-        gameShader.setMatrix4f("model", model);
-        gameShader.setMatrix3f("normalMat", glm::transpose(glm::inverse(glm::mat3{model})));
 
         gameShader.setVec3f("viewPos", camera.m_position);
+
+        gameShader.setVec3f("light.position", camera.m_position);
+        gameShader.setVec3f("light.direction", camera.m_front);
+        gameShader.setFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
+        gameShader.setFloat("light.outCutOff", glm::cos(glm::radians(17.5f)));
 
         // 绑定 VAO
         glBindVertexArray(VAO);
@@ -360,7 +376,15 @@ int main(void) {
 
         glEnable(GL_DEPTH_TEST);
         // Draw Box
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        for (size_t i = 0; i < 10; ++i) {
+            glm::mat4 model{1.0f};
+            model       = glm::translate(model, cubePositions[i]);
+            float angle = 20.0f * i;
+            model       = glm::rotate(model, angle, glm::vec3{1.f, 2.f, 3.f});
+            gameShader.setMatrix4f("model", model);
+            gameShader.setMatrix3f("normalMat", glm::transpose(glm::inverse(glm::mat3{model})));
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
 
         //=========== Draw Light ===========//
         // Light Shader Compose

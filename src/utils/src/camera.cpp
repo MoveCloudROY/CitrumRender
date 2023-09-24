@@ -48,7 +48,7 @@ glm::mat4 Camera::GetViewMatrix() {
         glm::vec3 U=glm::cross(D, R);
                     --             --    --             --
                     | R_x R_y R_z 0 |    |  1  0  0 -P_x |
-        LookAt = | U_x U_y U_z 0 |  * |  0  1  0 -P_y |
+        LookAt =    | U_x U_y U_z 0 |  * |  0  1  0 -P_y |
                     | D_x D_y D_z 0 |    |  0  0  1 -P_z |
                     |  0   0   0  0 |    |  0  0  0   1  |
                     --             --    --             --

@@ -29,6 +29,7 @@
 
 #include <todo.h>
 #include <camera.h>
+#include <texture.h>
 
 #include <editor/events/KeyEvents.h>
 
@@ -113,7 +114,7 @@ std::vector<float> quadVertices = { // vertex attributes for a quad that fills t
 
 // clang-format on
 
-glm::vec3 lightPos   = {1.4f, 1.f, -1.2f};
+glm::vec3 lightPos   = {1.4f, 1.f, 1.2f};
 glm::vec3 lightColor = {1.0f, 1.0f, 1.0f};
 
 bool hiddenCursor = false;
@@ -231,58 +232,20 @@ int main(void) {
     Utils::Shader lightShader("../src/shaders/vs/light.vs", "../src/shaders/fs/light.fs");
 
     // 生成纹理
-    unsigned int texture1;
-    glGenTextures(1, &texture1);
+    Utils::TextureBuilder texBuilder{};
 
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-
-    // 为当前绑定的纹理对象设置环绕、过滤方式
-    // GL_REPEAT            重复纹理图像
-    // GL_MIRRORED_REPEAT   和GL_REPEAT一样，但每次重复图片是镜像放置的
-    // GL_CLAMP_TO_EDGE     纹理坐标会被约束在0到1之间，超出的部分会重复纹理坐标的边缘，产生一种边缘被拉伸的效果
-    // GL_CLAMP_TO_BORDER   超出的坐标为用户指定的边缘颜色。
-    //
-    // # WARNING #
-    //    根据 https://stackoverflow.com/questions/26589683/access-violation-when-calling-gltextureparameteri-with-opengl-and-devil
-    //    这里原先使用 glTextureParameteri(), 为 OpenGL 4.5 中的新入口点，
-    //    这个想法是您可以在不绑定对象的情况下修改对象的状态。这可以通过减少 API 调用次数和驱动程序开销来提高效率。
-    //    与相应的旧入口点相比，这些新入口点将对象名称作为第一个参数，而旧入口点将目标作为第一个参数。
-    //    原先第一个参数为目标
-    //       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    //    新的则可以使用对象名称
-    //       glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    //
-
-    // 为当前绑定的纹理对象设置环绕、过滤方式
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // stb 加载图片
-
-    unsigned char* texture1_data =
-        stbi_load("../src/assets/container.jpg", &width, &height, &nrChannels, 0);
-    if (texture1_data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, texture1_data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    } else {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(texture1_data);
+    unsigned int texture_diff = texBuilder.build("../src/assets/container2.png");
+    unsigned int texture_spec = texBuilder.build("../src/assets/container2_specular.png");
 
     // Shader 配置
     gameShader.use();
-    // 设置纹理坐标
-    gameShader.setInt("texture_box", 0);
+    // 材质，光照设置
     gameShader.setVec3f("lightColor", lightColor);
 
-    gameShader.setVec3f("material.ambient", glm::vec3{1.0f, 0.5f, 0.31f});
-    gameShader.setVec3f("material.diffuse", glm::vec3{1.0f, 0.5f, 0.31f});
-    gameShader.setVec3f("material.specular", glm::vec3{0.5f, 0.5f, 0.5f});
+    // gameShader.setVec3f("material.ambient", glm::vec3{1.0f, 0.5f, 0.31f});
+    // gameShader.setVec3f("material.diffuse", glm::vec3{1.0f, 0.5f, 0.31f});
+    gameShader.setInt("material.diffuse", 0);
+    gameShader.setInt("material.specular", 1);
     gameShader.setFloat("material.shininess", 5.0f);
 
     gameShader.setVec3f("light.position", lightPos);
@@ -323,7 +286,7 @@ int main(void) {
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    // glBindTexture(GL_TEXTURE_2D, 0);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBuffer, 0);
 
@@ -387,21 +350,13 @@ int main(void) {
 
         gameShader.setVec3f("viewPos", camera.m_position);
 
-        lightColor.x = sin(glfwGetTime() * 2.0f);
-        lightColor.y = sin(glfwGetTime() * 0.7f);
-        lightColor.z = sin(glfwGetTime() * 1.3f);
-
-        glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);   // 降低影响
-        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // 很低的影响
-
-        gameShader.setVec3f("light.ambient", ambientColor);
-        gameShader.setVec3f("light.diffuse", diffuseColor);
-
         // 绑定 VAO
         glBindVertexArray(VAO);
         // 绑定纹理
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
+        glBindTexture(GL_TEXTURE_2D, texture_diff);
+        glActiveTexture(GL_TEXTURE0 + 1);
+        glBindTexture(GL_TEXTURE_2D, texture_spec);
 
         glEnable(GL_DEPTH_TEST);
         // Draw Box

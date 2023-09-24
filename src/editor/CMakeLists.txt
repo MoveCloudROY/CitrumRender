@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.6.0)
 
 set(EDITOR_INCLUDE_DIRS include)
 set(EDITOR_SOURCE_DIRS src)

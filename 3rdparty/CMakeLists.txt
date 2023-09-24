@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.6.0)
 
 set(SPDLOG_LIB_NAME "spdlog")
 add_subdirectory(${SPDLOG_LIB_NAME})

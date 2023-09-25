@@ -113,6 +113,13 @@ glm::vec3 cubePositions[] = {
     glm::vec3(-1.3f,  1.0f, -1.5f)
 };
 
+glm::vec3 pointLightPositions[] = {
+    glm::vec3( 0.7f,  0.2f,  2.0f),
+    glm::vec3( 2.3f, -3.3f, -4.0f),
+    glm::vec3(-4.0f,  2.0f, -12.0f),
+    glm::vec3( 0.0f,  0.0f, -3.0f)
+};
+
 std::vector<float> quadVertices = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
     // positions           // texCoords
     -1.0f,  1.0f,  0.0f, 1.0f,
@@ -260,15 +267,26 @@ int main(void) {
     gameShader.setInt("material.specular", 1);
     gameShader.setFloat("material.shininess", 5.0f);
 
-    gameShader.setVec3f("light.position", lightPos);
-    // gameShader.setVec3f("light.direction", glm::vec3{-0.2f, -1.0f, -0.3f});
-    gameShader.setVec3f("light.ambient", glm::vec3{0.2f, 0.2f, 0.2f});
-    gameShader.setVec3f("light.diffuse", glm::vec3{0.5f, 0.5f, 0.5f}); // 将光照调暗了一些以搭配场景
-    gameShader.setVec3f("light.specular", glm::vec3{1.0f, 1.0f, 1.0f});
-    gameShader.setFloat("light.constant", 1.0f);
-    gameShader.setFloat("light.linear", 0.07f);
-    gameShader.setFloat("light.quadratic", 0.017f);
-
+    gameShader.setVec3f("spotLights[0].position", lightPos);
+    // gameShader.setVec3f("spotLights[0].direction", glm::vec3{-0.2f, -1.0f, -0.3f});
+    gameShader.setVec3f("spotLights[0].ambient", glm::vec3{0.2f, 0.2f, 0.2f});
+    gameShader.setVec3f("spotLights[0].diffuse", glm::vec3{0.5f, 0.5f, 0.5f}); // 将光照调暗了一些以搭配场景
+    gameShader.setVec3f("spotLights[0].specular", glm::vec3{1.0f, 1.0f, 1.0f});
+    gameShader.setFloat("spotLights[0].constant", 1.0f);
+    gameShader.setFloat("spotLights[0].linear", 0.07f);
+    gameShader.setFloat("spotLights[0].quadratic", 0.017f);
+    gameShader.setFloat("spotLights[0].cutOff", glm::cos(glm::radians(12.5f)));
+    gameShader.setFloat("spotLights[0].outCutOff", glm::cos(glm::radians(17.5f)));
+    for (auto&& i = 0; i < 4; ++i) {
+        auto item = std::format("pointLights[{}]", i);
+        gameShader.setVec3f(item + ".position", pointLightPositions[i]);
+        gameShader.setVec3f(item + ".ambient", glm::vec3{0.2f, 0.2f, 0.2f});
+        gameShader.setVec3f(item + ".diffuse", glm::vec3{0.5f, 0.5f, 0.5f}); // 将光照调暗了一些以搭配场景
+        gameShader.setVec3f(item + ".specular", glm::vec3{1.0f, 1.0f, 1.0f});
+        gameShader.setFloat(item + ".constant", 1.0f);
+        gameShader.setFloat(item + ".linear", 0.09f);
+        gameShader.setFloat(item + ".quadratic", 0.032f);
+    }
     // 光照 Shader
     lightShader.use();
     lightShader.setVec3f("lightColor", lightColor);
@@ -361,10 +379,8 @@ int main(void) {
 
         gameShader.setVec3f("viewPos", camera.m_position);
 
-        gameShader.setVec3f("light.position", camera.m_position);
-        gameShader.setVec3f("light.direction", camera.m_front);
-        gameShader.setFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
-        gameShader.setFloat("light.outCutOff", glm::cos(glm::radians(17.5f)));
+        gameShader.setVec3f("spotLights[0].position", camera.m_position);
+        gameShader.setVec3f("spotLights[0].direction", camera.m_front);
 
         // 绑定 VAO
         glBindVertexArray(VAO);
@@ -392,16 +408,19 @@ int main(void) {
         lightShader.setMatrix4f("view", view);
         lightShader.setMatrix4f("projection", projection);
 
-        glm::mat4 mlight{1.0f};
-        mlight = glm::translate(mlight, lightPos);
-        mlight = glm::scale(mlight, glm::vec3{0.4});
 
-        lightShader.setMatrix4f("model", mlight);
 
         lightShader.setVec3f("lightColor", lightColor);
 
         glBindVertexArray(lightBlockVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        for (auto&& posVec : std::span{pointLightPositions}) {
+            glm::mat4 mlight{1.0f};
+            mlight = glm::translate(mlight, posVec);
+            mlight = glm::scale(mlight, glm::vec3{0.4});
+
+            lightShader.setMatrix4f("model", mlight);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
 
         //============= Use EBO! =============//
         // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

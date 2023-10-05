@@ -38,8 +38,8 @@
 
 constexpr int AppWindowWidth   = 1920;
 constexpr int AppWindowHeight  = 1080;
-int           gameWindowWidth  = 800;
-int           gameWindowHeight = 600;
+int           gameWindowWidth  = 1920;
+int           gameWindowHeight = 1080;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -299,6 +299,12 @@ int main(void) {
     applicationShader.use();
     applicationShader.setInt("screenTexture", 0);
 
+    float xscale, yscale;
+    glfwGetWindowContentScale(window, &xscale, &yscale);
+    auto meanscale = (xscale + yscale) / 2.f;
+    if (meanscale <= 0.0F)
+        meanscale = 1.0F;
+    spdlog::info("[UI] HiDPI scale: {}", meanscale);
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsLight();
@@ -306,12 +312,24 @@ int main(void) {
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
         style.WindowRounding              = 0.0f;
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+        style.ScaleAllSizes(meanscale);
     }
+    // Basic Latin, Extended Latin
+    io.Fonts->AddFontFromFileTTF("../src/assets/fonts/NotoSans-Medium.ttf", 18, nullptr, io.Fonts->GetGlyphRangesDefault());
 
+    // Default + Selection of 2500 Ideographs used by Simplified Chinese
+    io.Fonts->AddFontFromFileTTF("../src/assets/fonts/xihei-screen.ttf", 18, nullptr, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+
+    // Default + Hiragana, Katakana, Half-Width, Selection of 1946 Ideographs
+    // io.Fonts->AddFontFromFileTTF("font.ttf", 13, nullptr, io.Fonts->GetGlyphRangesJapanese());
+
+    io.FontGlobalScale = meanscale;
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
+
+
 
     // 创建帧缓冲
     uint32_t gameWindowFbo;
@@ -542,14 +560,16 @@ void renderMainImGui(GLFWwindow* window, auto colorBuffer) {
     ImGui::BeginMainMenuBar();
     {
         if (ImGui::BeginMenu("File")) {
-            ImGui::Button("test");
+            ImGui::Button("Test");
+
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Windows")) {
+            ImGui::Button("Test");
+
             ImGui::EndMenu();
         }
 
-        float button_height = 20;
-        float button_width  = 60;
-        ImGui::SameLine();
-        ImGui::Button("Button", ImVec2(button_width, button_height));
         menuHeight = ImGui::GetFrameHeight();
     }
     ImGui::EndMainMenuBar();

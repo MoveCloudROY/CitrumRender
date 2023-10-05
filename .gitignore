@@ -31,6 +31,7 @@
 *.out
 *.app
 
+!*.ini
 /bin
 /build
 /.cache
@@ -47,3 +48,6 @@ CTestTestfile.cmake
 _deps
 
 *.code-workspace
+*.rar
+*.zip
+*.tar.gz

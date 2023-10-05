@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.6.0)
 
 add_subdirectory(utils)
+add_subdirectory(runtime)
 add_subdirectory(editor)
 
 add_executable(${PROJECT_NAME} main.cpp)
@@ -16,6 +17,8 @@ target_link_libraries(${PROJECT_NAME}
             spdlog
             imgui
             editor
+
+            model
 )
 
 # target_compile_options(${PROJECT_NAME}  PRIVATE -fno-omit-frame-pointer)

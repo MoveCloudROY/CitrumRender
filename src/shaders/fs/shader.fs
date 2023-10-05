@@ -6,8 +6,8 @@ in vec3 Normal;
 out vec4 FragColor;
 
 struct Material {
-    sampler2D diffuse;
-    sampler2D specular;
+    sampler2D diffuse0;
+    sampler2D specular0;
     float shininess;
 }; 
 
@@ -93,8 +93,8 @@ void main()
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir) {
 
-    vec4 diffuseSample = texture(material.diffuse, TexCoord);
-    vec4 specularSample = texture(material.specular, TexCoord);
+    vec4 diffuseSample = texture(material.diffuse0, TexCoord);
+    vec4 specularSample = texture(material.specular0, TexCoord);
 
     vec3 lightDir = normalize(-light.direction);
 
@@ -115,8 +115,8 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir) {
 
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir) {
 
-    vec4 diffuseSample = texture(material.diffuse, TexCoord);
-    vec4 specularSample = texture(material.specular, TexCoord);
+    vec4 diffuseSample = texture(material.diffuse0, TexCoord);
+    vec4 specularSample = texture(material.specular0, TexCoord);
 
     vec3 lightDir = normalize(light.position - fragPos);
     
@@ -142,8 +142,8 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir) {
 
 vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir) {
 
-    vec4 diffuseSample = texture(material.diffuse, TexCoord);
-    vec4 specularSample = texture(material.specular, TexCoord);
+    vec4 diffuseSample = texture(material.diffuse0, TexCoord);
+    vec4 specularSample = texture(material.specular0, TexCoord);
 
     vec3 lightDir = normalize(light.position - fragPos);
 

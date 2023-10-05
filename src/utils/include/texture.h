@@ -6,6 +6,7 @@
 #include <spdlog/spdlog.h>
 
 #include <stdint.h>
+#include <string>
 
 namespace Utils {
 
@@ -17,7 +18,7 @@ class TextureBuilder {
 public:
     TextureBuilder();
     ~TextureBuilder();
-    uint32_t build(const char* path);
+    uint32_t build(const std::string& path, bool flip = true);
     void     setOptions(const TextureOptions& options);
 
 private:

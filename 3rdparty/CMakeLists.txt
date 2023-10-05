@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.6.0)
 
+project(third_party VERSION 0.1.0)
+
+set(CMAKE_BUILD_TYPE Release)
+
+
 set(SPDLOG_LIB_NAME "spdlog")
 add_subdirectory(${SPDLOG_LIB_NAME})
 
@@ -19,6 +24,8 @@ set(STB_INC_PATH "${STB_LIB_NAME}/include")
 add_library(${STB_LIB_NAME} STATIC ${STB_SRC_PATH}/stb_image.cpp)
 target_include_directories(${STB_LIB_NAME} PUBLIC ${STB_INC_PATH})
 
+set(ASSIMP_LIB_NAME "assimp")
+add_subdirectory(${ASSIMP_LIB_NAME})
 
 set(IMGUI_LIB_NAME "imgui")
 set(IMGUI_SRC_PATH "${IMGUI_LIB_NAME}")

@@ -10,10 +10,10 @@ TextureBuilder::TextureBuilder() {
 TextureBuilder::~TextureBuilder() {
 }
 
-uint32_t TextureBuilder::build(const char* path) {
+uint32_t TextureBuilder::build(const std::string& path, bool flip) {
     glGenTextures(1, &textureId);
     int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true);
+    stbi_set_flip_vertically_on_load(flip);
     glBindTexture(GL_TEXTURE_2D, textureId);
 
     // 为当前绑定的纹理对象设置环绕、过滤方式
@@ -41,7 +41,7 @@ uint32_t TextureBuilder::build(const char* path) {
     // stb 加载图片
 
     unsigned char* data =
-        stbi_load(path, &width, &height, &nrChannels, 0);
+        stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
     if (data) {
         GLenum format;
         if (nrChannels == 1)
@@ -54,7 +54,7 @@ uint32_t TextureBuilder::build(const char* path) {
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     } else {
-        spdlog::error("Failed to load texture: %s", path);
+        spdlog::error("Failed to load texture: {}", path);
     }
     stbi_image_free(data);
 

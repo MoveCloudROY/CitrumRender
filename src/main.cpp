@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/matrix.hpp>
 #include <imgui.h>
@@ -33,6 +34,8 @@
 
 #include <editor/events/KeyEvents.h>
 
+#include <model/model.h>
+
 constexpr int AppWindowWidth   = 1920;
 constexpr int AppWindowHeight  = 1080;
 int           gameWindowWidth  = 800;
@@ -44,7 +47,7 @@ void scroll_callback(GLFWwindow* window, double xOffset, double yOffset);
 void processExit(GLFWwindow* window);
 void processInput(GLFWwindow* window, int key, std::function<void(void)> func);
 void processCamera(GLFWwindow* window);
-void renderMainImGui(GLFWwindow* window, unsigned int texColorBuffer);
+void renderMainImGui(GLFWwindow* window, auto texColorBuffer);
 
 // clang-format off
 
@@ -92,7 +95,7 @@ std::vector<float> vertices = {
     -0.5f,  0.5f, -0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 1.0f
 };
 
-std::vector<unsigned int> indices {
+std::vector<uint32_t> indices {
     // 注意索引从0开始! 
     // 此例的索引(0,1,2,3)就是顶点数组vertices的下标，
     // 这样可以由下标代表顶点组合成矩形
@@ -215,8 +218,10 @@ int main(void) {
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
+    runtime::Model nanosuit{"../src/assets/nanosuit/nanosuit.obj"};
+
     // 创建物体 VAO
-    unsigned int VAO = Utils::createVAO(vertices);
+    auto VAO = Utils::createVAO(vertices);
     // 创建 EBO
     Utils::createEBO(indices);
 
@@ -232,12 +237,12 @@ int main(void) {
     glEnableVertexAttribArray(2);
 
     // 创建光源 VAO & VBO
-    unsigned int lightBlockVAO = Utils::createVAO(vertices);
+    auto lightBlockVAO = Utils::createVAO(vertices);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // position
     glEnableVertexAttribArray(0);
 
     // 屏幕 VAO
-    unsigned int quadVAO = Utils::createVAO(quadVertices);
+    auto quadVAO = Utils::createVAO(quadVertices);
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
@@ -253,8 +258,8 @@ int main(void) {
     // 生成纹理
     Utils::TextureBuilder texBuilder{};
 
-    unsigned int texture_diff = texBuilder.build("../src/assets/container2.png");
-    unsigned int texture_spec = texBuilder.build("../src/assets/container2_specular.png");
+    auto texture_diff = texBuilder.build("../src/assets/container2.png");
+    auto texture_spec = texBuilder.build("../src/assets/container2_specular.png");
 
     // Shader 配置
     gameShader.use();
@@ -309,11 +314,11 @@ int main(void) {
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     // 创建帧缓冲
-    unsigned int gameWindowFbo;
+    uint32_t gameWindowFbo;
     glGenFramebuffers(1, &gameWindowFbo);
     glBindFramebuffer(GL_FRAMEBUFFER, gameWindowFbo);
 
-    unsigned int texColorBuffer;
+    uint32_t texColorBuffer;
     glGenTextures(1, &texColorBuffer);
     glBindTexture(GL_TEXTURE_2D, texColorBuffer);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gameWindowWidth, gameWindowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
@@ -324,7 +329,7 @@ int main(void) {
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBuffer, 0);
 
-    unsigned int rbo;
+    uint32_t rbo;
     glGenRenderbuffers(1, &rbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, gameWindowWidth, gameWindowHeight);
@@ -382,33 +387,39 @@ int main(void) {
         gameShader.setVec3f("spotLights[0].position", camera.m_position);
         gameShader.setVec3f("spotLights[0].direction", camera.m_front);
 
-        // 绑定 VAO
-        glBindVertexArray(VAO);
-        // 绑定纹理
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture_diff);
-        glActiveTexture(GL_TEXTURE0 + 1);
-        glBindTexture(GL_TEXTURE_2D, texture_spec);
+        // // 绑定 VAO
+        // glBindVertexArray(VAO);
+        // // 绑定纹理
+        // glActiveTexture(GL_TEXTURE0);
+        // glBindTexture(GL_TEXTURE_2D, texture_diff);
+        // glActiveTexture(GL_TEXTURE0 + 1);
+        // glBindTexture(GL_TEXTURE_2D, texture_spec);
 
-        glEnable(GL_DEPTH_TEST);
-        // Draw Box
-        for (size_t i = 0; i < 10; ++i) {
-            glm::mat4 model{1.0f};
-            model       = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i;
-            model       = glm::rotate(model, angle, glm::vec3{1.f, 2.f, 3.f});
-            gameShader.setMatrix4f("model", model);
-            gameShader.setMatrix3f("normalMat", glm::transpose(glm::inverse(glm::mat3{model})));
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
+        // glEnable(GL_DEPTH_TEST);
+        // // Draw Box
+        // for (size_t i = 0; i < 10; ++i) {
+        //     glm::mat4 model{1.0f};
+        //     model       = glm::translate(model, cubePositions[i]);
+        //     float angle = 20.0f * i;
+        //     model       = glm::rotate(model, angle, glm::vec3{1.f, 2.f, 3.f});
+        //     gameShader.setMatrix4f("model", model);
+        //     gameShader.setMatrix3f("normalMat", glm::transpose(glm::inverse(glm::mat3{model})));
+        //     glDrawArrays(GL_TRIANGLES, 0, 36);
+        // }
+
+        glm::mat4 model_nano = glm::mat4(1.0f);
+        model_nano           = glm::translate(model_nano, glm::vec3(0.0f, -7.0f, -3.0f)); // translate it down so it's at the center of the scene
+        model_nano           = glm::scale(model_nano, glm::vec3(0.7f));                   // it's a bit too big for our scene, so scale it down
+        gameShader.setMatrix4f("model", model_nano);
+
+        gameShader.setMatrix3f("normalMat", glm::transpose(glm::inverse(glm::mat3{model_nano})));
+        nanosuit.Draw(gameShader);
 
         //=========== Draw Light ===========//
         // Light Shader Compose
         lightShader.use();
         lightShader.setMatrix4f("view", view);
         lightShader.setMatrix4f("projection", projection);
-
-
 
         lightShader.setVec3f("lightColor", lightColor);
 
@@ -421,6 +432,7 @@ int main(void) {
             lightShader.setMatrix4f("model", mlight);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
+        glBindVertexArray(0);
 
         //============= Use EBO! =============//
         // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -522,7 +534,7 @@ void processInput(GLFWwindow* window, int key, std::function<void(void)> func) {
         func();
 }
 
-void renderMainImGui(GLFWwindow* window, unsigned int colorBuffer) {
+void renderMainImGui(GLFWwindow* window, auto colorBuffer) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();

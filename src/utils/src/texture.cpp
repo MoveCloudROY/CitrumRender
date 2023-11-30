@@ -1,6 +1,5 @@
-#include "texture.h"
+#include "utils/texture.h"
 #include <cstdint>
-
 namespace Utils {
 
 TextureBuilder::TextureBuilder() {

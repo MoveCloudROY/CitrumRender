@@ -16,8 +16,13 @@
 #include <glm/trigonometric.hpp>
 #include <spdlog/spdlog.h>
 
+#include <core/imgui/theme.h>
 
-#include <stb_image.h>
+#include <core/terminal/terminal_commands.h>
+#include <imterm/terminal.hpp>
+#include <imterm/terminal_helpers.hpp>
+
+#include <stb/stb_image.h>
 
 #include <cstdlib>
 #include <iostream>
@@ -25,14 +30,13 @@
 #include <vector>
 #include <functional>
 #include <cmath>
-#include <data.h>
-#include <shader.h>
+#include <utils/data.h>
+#include <utils/shader.h>
 
-#include <todo.h>
-#include <camera.h>
-#include <texture.h>
+#include <utils/camera.h>
+#include <utils/texture.h>
 
-#include <editor/events/KeyEvents.h>
+#include <core/events/KeyEvents.h>
 
 #include <model/model.h>
 
@@ -148,7 +152,13 @@ float lastX = (float)gameWindowWidth / 2.f, lastY = (float)gameWindowHeight / 2.
 
 Utils::Camera camera{glm::vec3{0.f, 0.f, 3.f}};
 
+EG::Core::custom_command_struct               cmdstruct;
+ImTerm::terminal<EG::Core::terminal_commands> terminal_log(cmdstruct);
+
 int main(void) {
+    terminal_log.theme() = ImTerm::themes::purple;
+    spdlog::set_level(spdlog::level::trace);
+    spdlog::default_logger()->sinks().push_back(terminal_log.get_terminal_helper());
 
     spdlog::info("Welcome to spdlog!");
     GLFWwindow* window;
@@ -205,6 +215,7 @@ int main(void) {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking Windows
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi Viewports
+    io.ConfigDockingWithShift = true;                     // Only enable docking when is pressing SHIFT
 
 
     // OpenGL 版本号输出
@@ -310,15 +321,16 @@ int main(void) {
     //ImGui::StyleColorsLight();
     ImGuiStyle& style = ImGui::GetStyle();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-        style.WindowRounding              = 0.0f;
-        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+        // style.WindowRounding              = 0.0f;
+        // style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+        EG::Core::theme::SetTheme();
         style.ScaleAllSizes(meanscale);
     }
     // Basic Latin, Extended Latin
-    io.Fonts->AddFontFromFileTTF("../src/assets/fonts/NotoSans-Medium.ttf", 18, nullptr, io.Fonts->GetGlyphRangesDefault());
+    io.Fonts->AddFontFromFileTTF("../src/assets/fonts/NotoSans-Medium.ttf", 16 * meanscale, nullptr, io.Fonts->GetGlyphRangesDefault());
 
     // Default + Selection of 2500 Ideographs used by Simplified Chinese
-    io.Fonts->AddFontFromFileTTF("../src/assets/fonts/xihei-screen.ttf", 18, nullptr, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+    io.Fonts->AddFontFromFileTTF("../src/assets/fonts/xihei-screen.ttf", 16 * meanscale, nullptr, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
 
     // Default + Hiragana, Katakana, Half-Width, Selection of 1946 Ideographs
     // io.Fonts->AddFontFromFileTTF("font.ttf", 13, nullptr, io.Fonts->GetGlyphRangesJapanese());
@@ -336,6 +348,7 @@ int main(void) {
     glGenFramebuffers(1, &gameWindowFbo);
     glBindFramebuffer(GL_FRAMEBUFFER, gameWindowFbo);
 
+    // 添加纹理附件
     uint32_t texColorBuffer;
     glGenTextures(1, &texColorBuffer);
     glBindTexture(GL_TEXTURE_2D, texColorBuffer);
@@ -347,6 +360,7 @@ int main(void) {
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBuffer, 0);
 
+    // 添加缓冲对象附件用于深度测试&模板测试
     uint32_t rbo;
     glGenRenderbuffers(1, &rbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
@@ -379,7 +393,7 @@ int main(void) {
         processExit(window);
         //** HomeWork T4 **//
         processCamera(window);
-
+        // 渲染至gameWindowFbo帧缓冲
         glBindFramebuffer(GL_FRAMEBUFFER, gameWindowFbo); // 帧缓冲
         /* Render here */
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -457,11 +471,10 @@ int main(void) {
         // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 
-        //============= Use EBO! =============//
-        glBindFramebuffer(GL_FRAMEBUFFER, 0); // 返回默认帧缓冲
+        // 返回默认帧缓冲
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-
         renderMainImGui(window, texColorBuffer);
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -556,7 +569,8 @@ void renderMainImGui(GLFWwindow* window, auto colorBuffer) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    float menuHeight = 0;
+    float       menuHeight   = 0;
+    static bool showing_term = true, showing_demo = false;
     ImGui::BeginMainMenuBar();
     {
         if (ImGui::BeginMenu("File")) {
@@ -565,7 +579,13 @@ void renderMainImGui(GLFWwindow* window, auto colorBuffer) {
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Windows")) {
-            ImGui::Button("Test");
+            if (ImGui::Button("Logger")) {
+                ImGui::Begin("Logger");
+                showing_term = true;
+                ImGui::End();
+            }
+            ImGui::Checkbox("Demo", &showing_demo);
+            // auto showing_demo = ImGui::Selectable("Demo", true);
 
             ImGui::EndMenu();
         }
@@ -612,6 +632,11 @@ void renderMainImGui(GLFWwindow* window, auto colorBuffer) {
     }
     ImGui::End();
 
-
+    if (showing_term) {
+        showing_term = terminal_log.show();
+    }
+    if (showing_demo) {
+        ImGui::ShowDemoWindow();
+    }
     ImGui::Render();
 }

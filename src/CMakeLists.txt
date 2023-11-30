@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.6.0)
 
+add_subdirectory(platform)
+add_subdirectory(renderer)
 add_subdirectory(utils)
+add_subdirectory(core)
 add_subdirectory(runtime)
-add_subdirectory(editor)
+
 
 add_executable(${PROJECT_NAME} main.cpp)
 
@@ -16,7 +19,8 @@ target_link_libraries(${PROJECT_NAME}
             stb
             spdlog
             imgui
-            editor
+            core
+            ImTerm
 
             model
 )

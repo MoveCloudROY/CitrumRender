@@ -2,11 +2,14 @@ cmake_minimum_required(VERSION 3.6.0)
 
 project(third_party VERSION 0.1.0)
 
-set(CMAKE_BUILD_TYPE Release)
-
-
 set(SPDLOG_LIB_NAME "spdlog")
-add_subdirectory(${SPDLOG_LIB_NAME})
+add_library(${SPDLOG_LIB_NAME} INTERFACE)
+
+target_include_directories(
+    ${SPDLOG_LIB_NAME} 
+        INTERFACE
+    ${SPDLOG_LIB_NAME}/include
+)
 
 set(DOCTEST_LIB_NAME "doctest")
 add_subdirectory(${DOCTEST_LIB_NAME})
@@ -49,3 +52,6 @@ target_include_directories(${IMGUI_LIB_NAME} PUBLIC
             ${IMGUI_INC_PATH}
             ${IMGUI_BACKENDS_INC_PATH}
 )
+
+set(IMTERM_LIB_NAME "imterm")
+add_subdirectory(${IMTERM_LIB_NAME})

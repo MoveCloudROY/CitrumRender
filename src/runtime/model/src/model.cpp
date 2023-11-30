@@ -1,9 +1,8 @@
 #include "model/model.h"
 
-#include <texture.h>
+#include <utils/texture.h>
 
 #include <spdlog/spdlog.h>
-#include <stb_image.h>
 
 
 using namespace runtime;

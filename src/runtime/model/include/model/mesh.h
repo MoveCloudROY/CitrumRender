@@ -6,7 +6,7 @@
 
 #include <glm/glm.hpp>
 
-#include <shader.h>
+#include <utils/shader.h>
 #include <assimp/types.h>
 
 namespace runtime {

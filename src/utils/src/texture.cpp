@@ -1,20 +1,21 @@
 #include "utils/texture.h"
 #include <cstdint>
-namespace Utils {
+namespace EG::Utils {
 
-TextureBuilder::TextureBuilder() {
+TextureBuilder::TextureBuilder(const TextureType& type)
+    : texType_(type) {
     // 生成纹理
+    glGenTextures(1, &textureId_);
+    glBindTexture(TextureTypeToGLType(type), textureId_);
 }
 
-TextureBuilder::~TextureBuilder() {
+TextureBuilder& TextureBuilder::Bind(uint32_t slot) {
+    glBindTextureUnit(slot, textureId_);
+    return *this;
 }
 
-uint32_t TextureBuilder::build(const std::string& path, bool flip) {
-    glGenTextures(1, &textureId);
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(flip);
-    glBindTexture(GL_TEXTURE_2D, textureId);
 
+TextureBuilder& TextureBuilder::SetProps() {
     // 为当前绑定的纹理对象设置环绕、过滤方式
     // GL_REPEAT            重复纹理图像
     // GL_MIRRORED_REPEAT   和GL_REPEAT一样，但每次重复图片是镜像放置的
@@ -33,10 +34,19 @@ uint32_t TextureBuilder::build(const std::string& path, bool flip) {
     //
 
     // 为当前绑定的纹理对象设置环绕、过滤方式
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(TextureTypeToGLType(texType_), GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(TextureTypeToGLType(texType_), GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(TextureTypeToGLType(texType_), GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(TextureTypeToGLType(texType_), GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(TextureTypeToGLType(texType_), GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    return *this;
+}
+
+TextureBuilder& TextureBuilder::Attach(const std::string& path, bool flip) {
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(flip);
+
     // stb 加载图片
 
     unsigned char* data =
@@ -50,17 +60,20 @@ uint32_t TextureBuilder::build(const std::string& path, bool flip) {
         else if (nrChannels == 4)
             format = GL_RGBA;
 
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        glTexImage2D(TextureTypeToGLTarget(texType_) + textureIndex_, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        if (texType_ != TextureType::TEXTURE_CUBE_MAP)
+            glGenerateMipmap(TextureTypeToGLTarget(texType_) + textureIndex_);
+        ++textureIndex_;
     } else {
         spdlog::error("Failed to load texture: {}", path);
     }
     stbi_image_free(data);
 
-    return textureId;
+    return *this;
 }
 
-void TextureBuilder::setOptions(const TextureOptions& options) {
+uint32_t TextureBuilder::Build() {
+    return textureId_;
 }
 
-} // namespace Utils
+} // namespace EG::Utils

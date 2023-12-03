@@ -1,6 +1,6 @@
 #include "utils/data.h"
 
-namespace Utils {
+namespace EG::Utils {
 
 unsigned int createVAO(const std::vector<float>& vertices) {
     // 创建 VAO
@@ -34,4 +34,4 @@ void createEBO(const std::vector<unsigned int>& indices) {
     );
 }
 
-} // namespace Utils
+} // namespace EG::Utils

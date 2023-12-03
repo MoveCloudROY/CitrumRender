@@ -9,38 +9,38 @@
 #include <utils/shader.h>
 #include <assimp/types.h>
 
-namespace runtime {
+namespace EG::runtime {
 
 // clang-format off
 
 // TexType X-macro
-#define TEXTYPE_X(func, ...) \
+#define MATERIAL_TYPE_X(func, ...) \
     func(diffuse, ##__VA_ARGS__)        \
     func(specular, ##__VA_ARGS__)        \
     func(normal, ##__VA_ARGS__)       
 
-#define TEXTYPE_CREATE_ENUM(name, ...) \
+#define MATERIAL_TYPE_CREATE_ENUM(name, ...) \
     name,
 
-#define TEXTYPE_RETURN_STR(name) \
+#define MATERIAL_TYPE_RETURN_STR(name) \
     return #name
 
-#define TEXTYPE_CREATE_SWITCH(name, do_something) \
+#define MATERIAL_TYPE_CREATE_SWITCH(name, do_something) \
     case TexType::name: do_something(name); 
 
 enum class TexType {
-    TEXTYPE_X(TEXTYPE_CREATE_ENUM)
+    MATERIAL_TYPE_X(MATERIAL_TYPE_CREATE_ENUM)
 };
 
 constexpr std::string Enum2String(TexType t) {
     switch (t) {
-        TEXTYPE_X(TEXTYPE_CREATE_SWITCH, TEXTYPE_RETURN_STR);
+        MATERIAL_TYPE_X(MATERIAL_TYPE_CREATE_SWITCH, MATERIAL_TYPE_RETURN_STR);
         default: return "Not Exist";
     }
 }
 
-#undef TEXTYPE_CREATE_ENUM
-#undef TEXTYPE_CREATE_STR
+#undef MATERIAL_TYPE_CREATE_ENUM
+#undef MATERIAL_TYPE_CREATE_STR
 // clang-format on
 
 
@@ -97,6 +97,6 @@ private:
     void     InitMesh();
 };
 
-} // namespace runtime
+} // namespace EG::runtime
 
 #endif /* EG_MESH_H__ */

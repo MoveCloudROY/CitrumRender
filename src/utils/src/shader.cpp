@@ -2,7 +2,7 @@
 #include <sstream>
 #include <string>
 
-namespace Utils {
+namespace EG::Utils {
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath) {
     // 1. 读取文件
@@ -113,4 +113,4 @@ void Shader::setMatrix4f(const std::string& name, const glm::mat4& mat) const {
 }
 
 
-} // namespace Utils
+} // namespace EG::Utils

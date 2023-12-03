@@ -9,7 +9,7 @@
 #include <assimp/postprocess.h>
 
 
-namespace runtime {
+namespace EG::runtime {
 
 class Model {
 public:
@@ -31,6 +31,6 @@ private:
     std::string                                               directory_;
 };
 
-} // namespace runtime
+} // namespace EG::runtime
 
 #endif /* EG_MODEL_H__ */

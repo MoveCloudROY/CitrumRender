@@ -1,6 +1,6 @@
 #include "model/mesh.h"
 #include <spdlog/spdlog.h>
-using namespace runtime;
+using namespace EG::runtime;
 
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, std::vector<Texture> textures)
     : vertices_{std::move(vertices)}
@@ -41,22 +41,22 @@ Mesh& Mesh::operator=(Mesh&& rhs) {
 }
 
 void Mesh::Draw(Utils::Shader shader) {
-#define TEXTYPE_CREATE_NR(name) \
+#define MATERIAL_TYPE_CREATE_NR(name) \
     size_t name##_nr = 0;
 
-#define DO_WORKS(name)                                                                          \
+#define SET_SHADER_UNIFORM(name)                                                                \
     {                                                                                           \
         shader.setInt(std::string{"material."} + #name + std::to_string(name##_nr).c_str(), i); \
         name##_nr++;                                                                            \
         break;                                                                                  \
     }
 
-    TEXTYPE_X(TEXTYPE_CREATE_NR);
+    MATERIAL_TYPE_X(MATERIAL_TYPE_CREATE_NR);
 
     for (size_t i = 0; i < textures_.size(); ++i) {
         glActiveTexture(GL_TEXTURE0 + i);
         switch (textures_[i].type) {
-            TEXTYPE_X(TEXTYPE_CREATE_SWITCH, DO_WORKS);
+            MATERIAL_TYPE_X(MATERIAL_TYPE_CREATE_SWITCH, SET_SHADER_UNIFORM);
         }
         glBindTexture(GL_TEXTURE_2D, textures_[i].id);
     }
@@ -64,8 +64,8 @@ void Mesh::Draw(Utils::Shader shader) {
     glBindVertexArray(vao_);
     glDrawElements(GL_TRIANGLES, indices_.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
-#undef DO_WORKS
-#undef TEXTYPE_CREATE_NR
+#undef SET_SHADER_UNIFORM
+#undef MATERIAL_TEX_CREATE_NR
 }
 
 

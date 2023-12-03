@@ -35,10 +35,16 @@
 
 #include <utils/camera.h>
 #include <utils/texture.h>
+#include <utils/cubemap.h>
+#include <utils/vertexArray.h>
+#include <utils/definedata.h>
 
 #include <core/events/KeyEvents.h>
 
 #include <model/model.h>
+
+
+using namespace EG;
 
 constexpr int AppWindowWidth   = 1920;
 constexpr int AppWindowHeight  = 1080;
@@ -55,87 +61,11 @@ void renderMainImGui(GLFWwindow* window, auto texColorBuffer);
 
 // clang-format off
 
-std::vector<float> vertices = {
-    -0.5f, -0.5f, -0.5f, 0.0f,  0.0f, -1.0f,0.0f, 0.0f,
-    0.5f, -0.5f, -0.5f, 0.0f,  0.0f, -1.0f,    1.0f, 0.0f,
-    0.5f,  0.5f, -0.5f, 0.0f,  0.0f, -1.0f, 1.0f, 1.0f,
-    0.5f,  0.5f, -0.5f, 0.0f,  0.0f, -1.0f, 1.0f, 1.0f,
--0.5f,  0.5f, -0.5f, 0.0f,  0.0f, -1.0f,   0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, 0.0f,  0.0f, -1.0f, 0.0f, 0.0f,
-
-    -0.5f, -0.5f,  0.5f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f,
-    0.5f, -0.5f,  0.5f, 0.0f,  0.0f, 1.0f, 1.0f, 0.0f,
-    0.5f,  0.5f,  0.5f, 0.0f,  0.0f, 1.0f, 1.0f, 1.0f,
-    0.5f,  0.5f,  0.5f, 0.0f,  0.0f, 1.0f, 1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f, 0.0f,  0.0f, 1.0f, 0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f, 0.0f,  0.0f, 1.0f, 0.0f, 0.0f,
-
-    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f,
-
-    0.5f,  0.5f,  0.5f, 1.0f,  0.0f,  0.0f,    1.0f, 0.0f,
-    0.5f,  0.5f, -0.5f, 1.0f,  0.0f,  0.0f,    1.0f, 1.0f,
-    0.5f, -0.5f, -0.5f, 1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
-    0.5f, -0.5f, -0.5f, 1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
-    0.5f, -0.5f,  0.5f, 1.0f,  0.0f,  0.0f, 0.0f, 0.0f,
-    0.5f,  0.5f,  0.5f, 1.0f,  0.0f,  0.0f, 1.0f, 0.0f,
-
-    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f,
-    0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f,
-    0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f,
-    0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f,
-
-    -0.5f,  0.5f, -0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 1.0f,
-    0.5f,  0.5f, -0.5f, 0.0f,  1.0f,  0.0f, 1.0f, 1.0f,
-    0.5f,  0.5f,  0.5f, 0.0f,  1.0f,  0.0f, 1.0f, 0.0f,
-    0.5f,  0.5f,  0.5f, 0.0f,  1.0f,  0.0f, 1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 1.0f
-};
-
-std::vector<uint32_t> indices {
-    // 注意索引从0开始! 
-    // 此例的索引(0,1,2,3)就是顶点数组vertices的下标，
-    // 这样可以由下标代表顶点组合成矩形
-    0, 1, 3,
-    1, 2, 3,
-};
-
-glm::vec3 cubePositions[] = {
-    glm::vec3( 0.0f,  0.0f,  0.0f),
-    glm::vec3( 2.0f,  5.0f, -15.0f),
-    glm::vec3(-1.5f, -2.2f, -2.5f),
-    glm::vec3(-3.8f, -2.0f, -12.3f),
-    glm::vec3( 2.4f, -0.4f, -3.5f),
-    glm::vec3(-1.7f,  3.0f, -7.5f),
-    glm::vec3( 1.3f, -2.0f, -2.5f),
-    glm::vec3( 1.5f,  2.0f, -2.5f),
-    glm::vec3( 1.5f,  0.2f, -1.5f),
-    glm::vec3(-1.3f,  1.0f, -1.5f)
-};
-
 glm::vec3 pointLightPositions[] = {
     glm::vec3( 0.7f,  0.2f,  2.0f),
     glm::vec3( 2.3f, -3.3f, -4.0f),
     glm::vec3(-4.0f,  2.0f, -12.0f),
     glm::vec3( 0.0f,  0.0f, -3.0f)
-};
-
-std::vector<float> quadVertices = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
-    // positions           // texCoords
-    -1.0f,  1.0f,  0.0f, 1.0f,
-    -1.0f, -1.0f,  0.0f, 0.0f,
-    1.0f, -1.0f,  1.0f, 0.0f,
-
-    -1.0f,  1.0f,  0.0f, 1.0f,
-    1.0f, -1.0f,  1.0f, 0.0f,
-    1.0f,  1.0f,  1.0f, 1.0f
 };
 
 // clang-format on
@@ -183,7 +113,7 @@ int main(void) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);           // Required on Mac
 #else
     // GL 3.0 + GLSL 130
-    const char* glsl_version = "#version 330";
+    const char* glsl_version = "#version 430";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
@@ -229,36 +159,52 @@ int main(void) {
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
+
+    float xscale, yscale;
+    glfwGetWindowContentScale(window, &xscale, &yscale);
+    auto meanscale = (xscale + yscale) / 2.f;
+    if (meanscale <= 0.0F)
+        meanscale = 1.0F;
+    spdlog::info("[UI] HiDPI scale: {}", meanscale);
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsLight();
+    ImGuiStyle& style = ImGui::GetStyle();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+        // style.WindowRounding              = 0.0f;
+        // style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+        EG::Core::theme::SetTheme();
+        style.ScaleAllSizes(meanscale);
+    }
+    // Basic Latin, Extended Latin
+    io.Fonts->AddFontFromFileTTF("../src/assets/fonts/NotoSans-Medium.ttf", 16 * meanscale, nullptr, io.Fonts->GetGlyphRangesDefault());
+
+    // Default + Selection of 2500 Ideographs used by Simplified Chinese
+    io.Fonts->AddFontFromFileTTF("../src/assets/fonts/xihei-screen.ttf", 16 * meanscale, nullptr, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+
+    // Default + Hiragana, Katakana, Half-Width, Selection of 1946 Ideographs
+    // io.Fonts->AddFontFromFileTTF("font.ttf", 13, nullptr, io.Fonts->GetGlyphRangesJapanese());
+
+    io.FontGlobalScale = meanscale;
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+
+
     runtime::Model nanosuit{"../src/assets/nanosuit/nanosuit.obj"};
 
-    // 创建物体 VAO
-    auto VAO = Utils::createVAO(vertices);
-    // 创建 EBO
-    Utils::createEBO(indices);
+    // 创建光源 VAO
+    auto lightBlockSize = Utils::cubeVertices.size() * sizeof(Utils::cubeVertices[0]);
 
-    // 从 VBO 解析顶点属性,并将状态保存到 VAO
-    // '0' => Corresponding `location` in vertex shader Attribute value
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);                   // position
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))); // normal
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float))); // texture_box
+    auto lightBlockVertexBuf = std::make_shared<Utils::VertexBuffer>(nullptr, lightBlockSize);
+    lightBlockVertexBuf->SetLayout({
+        {"position", Utils::ShaderDataType::Vecf3},
+    });
+    lightBlockVertexBuf->SetSubData(Utils::cubeVertices).Unbind();
+    auto lightBlockVA = Utils::VertexArray{};
+    lightBlockVA.SetVertexBuffer(lightBlockVertexBuf).Unbind();
 
-    // 以顶点属性位置值作为参数，启用顶点属性
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
-
-    // 创建光源 VAO & VBO
-    auto lightBlockVAO = Utils::createVAO(vertices);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // position
-    glEnableVertexAttribArray(0);
-
-    // 屏幕 VAO
-    auto quadVAO = Utils::createVAO(quadVertices);
-
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
 
 
     // 生成着色器程序对象
@@ -267,10 +213,23 @@ int main(void) {
     Utils::Shader lightShader("../src/shaders/vs/light.vs", "../src/shaders/fs/light.fs");
 
     // 生成纹理
-    Utils::TextureBuilder texBuilder{};
-
-    auto texture_diff = texBuilder.build("../src/assets/container2.png");
-    auto texture_spec = texBuilder.build("../src/assets/container2_specular.png");
+    auto diffTexture = Utils::TextureBuilder(Utils::TextureType::TEXTURE_2D)
+                           .SetProps()
+                           .Attach("../src/assets/container2.png")
+                           .Build();
+    auto specTexture = Utils::TextureBuilder(Utils::TextureType::TEXTURE_2D)
+                           .SetProps()
+                           .Attach("../src/assets/container2.png")
+                           .Build();
+    // auto cubeMapTexture = Utils::TextureBuilder(Utils::TextureType::TEXTURE_CUBE_MAP)
+    //                           .SetProps()
+    //                           .Attach("../src/assets/skybox/right.jpg")
+    //                           .Attach("../src/assets/skybox/left.jpg")
+    //                           .Attach("../src/assets/skybox/top.jpg")
+    //                           .Attach("../src/assets/skybox/bottom.jpg")
+    //                           .Attach("../src/assets/skybox/front.jpg")
+    //                           .Attach("../src/assets/skybox/back.jpg")
+    //                           .Build();
 
     // Shader 配置
     gameShader.use();
@@ -310,37 +269,6 @@ int main(void) {
     applicationShader.use();
     applicationShader.setInt("screenTexture", 0);
 
-    float xscale, yscale;
-    glfwGetWindowContentScale(window, &xscale, &yscale);
-    auto meanscale = (xscale + yscale) / 2.f;
-    if (meanscale <= 0.0F)
-        meanscale = 1.0F;
-    spdlog::info("[UI] HiDPI scale: {}", meanscale);
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
-    ImGuiStyle& style = ImGui::GetStyle();
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-        // style.WindowRounding              = 0.0f;
-        // style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-        EG::Core::theme::SetTheme();
-        style.ScaleAllSizes(meanscale);
-    }
-    // Basic Latin, Extended Latin
-    io.Fonts->AddFontFromFileTTF("../src/assets/fonts/NotoSans-Medium.ttf", 16 * meanscale, nullptr, io.Fonts->GetGlyphRangesDefault());
-
-    // Default + Selection of 2500 Ideographs used by Simplified Chinese
-    io.Fonts->AddFontFromFileTTF("../src/assets/fonts/xihei-screen.ttf", 16 * meanscale, nullptr, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
-
-    // Default + Hiragana, Katakana, Half-Width, Selection of 1946 Ideographs
-    // io.Fonts->AddFontFromFileTTF("font.ttf", 13, nullptr, io.Fonts->GetGlyphRangesJapanese());
-
-    io.FontGlobalScale = meanscale;
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
-
 
 
     // 创建帧缓冲
@@ -373,9 +301,19 @@ int main(void) {
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    Utils::CubeMap cubeMap{
+        "../src/assets/skybox/right.jpg",
+        "../src/assets/skybox/left.jpg",
+        "../src/assets/skybox/top.jpg",
+        "../src/assets/skybox/bottom.jpg",
+        "../src/assets/skybox/front.jpg",
+        "../src/assets/skybox/back.jpg",
+    };
 
     // 启用深度测试
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    // glCullFace(GL_FRONT);
 
     // Main loop
 #ifdef __EMSCRIPTEN__
@@ -401,18 +339,15 @@ int main(void) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-        //=========== Draw Box ===========//
-        // Box Shader Compose
-        gameShader.use();
-
         // 创建投影矩阵 (MVP - Projection)
-        auto      projection = glm::perspective(glm::radians(camera.m_zoom), (float)gameWindowWidth / (float)gameWindowHeight, 0.1f, 100.f);
-        glm::mat4 view       = camera.GetViewMatrix();
+        auto projection = glm::perspective(glm::radians(camera.m_zoom), (float)gameWindowWidth / (float)gameWindowHeight, 0.1f, 100.f);
+        // 获得观察矩阵 (MVP - View)
+        glm::mat4 view = camera.GetViewMatrix();
 
+        gameShader.use();
         gameShader.setMatrix4f("view", view);
         gameShader.setMatrix4f("projection", projection);
 
-        // 创建模型矩阵 (MVP - Model)
 
         gameShader.setVec3f("viewPos", camera.m_position);
 
@@ -423,9 +358,9 @@ int main(void) {
         // glBindVertexArray(VAO);
         // // 绑定纹理
         // glActiveTexture(GL_TEXTURE0);
-        // glBindTexture(GL_TEXTURE_2D, texture_diff);
+        // glBindTexture(GL_TEXTURE_2D, diffTexture);
         // glActiveTexture(GL_TEXTURE0 + 1);
-        // glBindTexture(GL_TEXTURE_2D, texture_spec);
+        // glBindTexture(GL_TEXTURE_2D, specTexture);
 
         // glEnable(GL_DEPTH_TEST);
         // // Draw Box
@@ -449,22 +384,30 @@ int main(void) {
 
         //=========== Draw Light ===========//
         // Light Shader Compose
+
         lightShader.use();
         lightShader.setMatrix4f("view", view);
         lightShader.setMatrix4f("projection", projection);
 
         lightShader.setVec3f("lightColor", lightColor);
-
-        glBindVertexArray(lightBlockVAO);
+        lightBlockVA.Bind();
         for (auto&& posVec : std::span{pointLightPositions}) {
             glm::mat4 mlight{1.0f};
+            // 创建模型矩阵 (MVP - Model)
             mlight = glm::translate(mlight, posVec);
             mlight = glm::scale(mlight, glm::vec3{0.4});
 
             lightShader.setMatrix4f("model", mlight);
+            // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
-        glBindVertexArray(0);
+        lightBlockVA.Unbind();
+
+
+        // In order to make skybox look infinitely far away
+        // SkyBox should not be moved due to Camera movement
+        // So we need make the Shift part of the View matrix is 0
+        cubeMap.Draw(glm::mat4(glm::mat3(view)), projection);
 
         //============= Use EBO! =============//
         // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -534,8 +477,8 @@ void scroll_callback(GLFWwindow* window, double xOffset, double yOffset) {
 }
 
 void processExit(GLFWwindow* window) {
-    if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+    // if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS)
+    //     glfwSetWindowShouldClose(window, true);
 }
 
 void processCamera(GLFWwindow* window) {

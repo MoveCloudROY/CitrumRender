@@ -1,6 +1,6 @@
 #include "utils/camera.h"
 
-namespace Utils {
+namespace EG::Utils {
 
 // 向量初始化
 Camera::Camera(
@@ -132,4 +132,4 @@ void Camera::updateCameraVectors() {
     m_up    = glm::normalize(glm::cross(m_right, m_front));
 }
 
-} // namespace Utils
+} // namespace EG::Utils

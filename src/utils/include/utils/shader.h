@@ -9,7 +9,7 @@
 #include <iostream>
 #include <string>
 
-namespace Utils {
+namespace EG::Utils {
 
 class Shader {
 public:
@@ -32,6 +32,6 @@ public:
 };
 
 
-} // namespace Utils
+} // namespace EG::Utils
 
 #endif /* EG_SHADER_H__ */

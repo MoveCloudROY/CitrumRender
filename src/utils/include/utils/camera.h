@@ -8,7 +8,7 @@
 #include <cmath>
 
 
-namespace Utils {
+namespace EG::Utils {
 
 class Camera {
 public:
@@ -85,5 +85,5 @@ private:
     bool isMouseAttached;
 };
 
-} // namespace Utils
+} // namespace EG::Utils
 #endif /* EG_CAMERA_H__ */

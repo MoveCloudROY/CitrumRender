@@ -5,7 +5,7 @@
 #include <spdlog/spdlog.h>
 
 
-using namespace runtime;
+using namespace EG::runtime;
 
 Model::Model(const std::string& path) {
     LoadModel(path);
@@ -98,7 +98,7 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType 
             textures.push_back(*it);
         } else {
             Texture tmp{
-                Utils::TextureBuilder{}.build(directory_ + '/' + name.C_Str(), false),
+                Utils::TextureBuilder(Utils::TextureType::TEXTURE_2D).Attach(directory_ + '/' + name.C_Str(), false).Build(),
                 type_enum,
                 name};
             textures.push_back(tmp);

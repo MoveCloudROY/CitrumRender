@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include <GL/glew.h>
+#include <spdlog/spdlog.h> // TODO: TEMP
 
 namespace EG::Utils {
 
@@ -53,6 +54,10 @@ struct BufferElement {
         : name(name), type(type), size(ShaderDataTypeSize(type)), offset(0), normalized(normalized) {
     }
 
+    void SetOffset(size_t totalOffset) {
+        offset = totalOffset;
+    }
+
     uint32_t GetComponentCount() const {
         switch (type) {
         case ShaderDataType::None: return 0;
@@ -92,8 +97,13 @@ public:
     std::vector<BufferElement>::const_iterator begin() const { return elements_.begin(); }
     std::vector<BufferElement>::const_iterator end() const { return elements_.end(); }
 
+    void push_back(const BufferElement& element) {
+        elements_.push_back(std::move(element));
+    }
+
 private:
-    void CalculateOffsetsAndStride() {
+    void
+    CalculateOffsetsAndStride() {
         size_t offset = 0;
         stride_       = 0;
         for (auto& element : elements_) {
@@ -114,29 +124,38 @@ private:
 // Bind() api for Bind VBO State
 class VertexBuffer {
 public:
-    VertexBuffer(uint32_t size);
+    VertexBuffer(uint32_t size, bool interleaved = false);
     VertexBuffer(float* vertices, uint32_t size);
     ~VertexBuffer();
 
     void Bind() const;
     void Unbind() const;
 
+    template <typename T>
+    VertexBuffer& SetData(const std::vector<T>& vec) {
+        if (interleaved_)
+            spdlog::error("[OpenGL] Already use SOA(interleaved) data model");
+        glBindBuffer(GL_ARRAY_BUFFER, vboID_);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, vec.size() * sizeof(T), vec.data()); // [0, 0+size]
+        return *this;
+    }
+
     // void SetData(const void* data, uint32_t size);
     template <typename T>
-    VertexBuffer& SetSubData(const std::vector<T>& vec) {
+    VertexBuffer& SetSubData(BufferElement&& element, const std::vector<T>& vec) {
+        if (!interleaved_)
+            spdlog::error("[OpenGL] Already use AOS(not interleaved) data model");
+
+        element.SetOffset(totalBytes);
+        layout_.push_back(element);
         glBindBuffer(GL_ARRAY_BUFFER, vboID_);
         // `glBufferSubData just updates a buffer object's data store
         // but doesn't creates a buffer object's data store.
         // You need to create the buffer object's data store with `glBufferData,
         // after that you can update the data with `glBufferSubData.
-        glBufferSubData(GL_ARRAY_BUFFER, totalSize_, vec.size() * sizeof(T), vec.data());
-        totalSize_ += vec.size() * sizeof(T);
-        return *this;
-    }
-    template <typename T>
-    VertexBuffer& UpdateSubData(const std::vector<T>& vec, uint32_t offset) {
-        glBindBuffer(GL_ARRAY_BUFFER, vboID_);
-        glBufferSubData(GL_ARRAY_BUFFER, offset, vec.size() * sizeof(T), vec.data()); // [offset, offset+size]
+        glBufferSubData(GL_ARRAY_BUFFER, totalBytes, vec.size() * sizeof(T), vec.data());
+        spdlog::info("[OpenGL] &{} Offset: {} Size: {}", __func__, totalBytes, vec.size() * sizeof(T));
+        totalBytes += vec.size() * sizeof(T);
         return *this;
     }
 
@@ -146,10 +165,14 @@ public:
         return *this;
     }
 
+    uint32_t GetBytes() const { return totalBytes; };
+    uint32_t GetSize() const { return totalBytes / layout_.GetStride(); };
+
 private:
     uint32_t     vboID_;
     BufferLayout layout_;
-    uint32_t     totalSize_ = 0;
+    uint32_t     totalBytes   = 0;
+    bool         interleaved_ = 0;
 };
 
 

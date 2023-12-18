@@ -22,7 +22,7 @@ static GLenum ShaderDataTypeToBaseType(ShaderDataType type) {
     case ShaderDataType::Bool: return GL_BOOL;
     default: break;
     }
-    spdlog::error("Unknown ShaderDataType!");
+    spdlog::error("[OpenGL] Unknown ShaderDataType!");
     return 0;
 }
 
@@ -49,7 +49,7 @@ void VertexArray::Unbind() const {
 VertexArray& VertexArray::SetVertexBuffer(const std::shared_ptr<VertexBuffer>& vertexBuffer) {
 
     if (!vertexBuffer->GetLayout().GetElements().size())
-        spdlog::error("Vertex Buffer has no layout!");
+        spdlog::error("[OpenGL] Vertex Buffer has no layout!");
 
     glBindVertexArray(rendererID_);
     vertexBuffer->Bind();
@@ -63,7 +63,7 @@ VertexArray& VertexArray::SetVertexBuffer(const std::shared_ptr<VertexBuffer>& v
         case ShaderDataType::Vecf4: {
             glEnableVertexAttribArray(vertexBufferIndex_);
             glVertexAttribPointer(vertexBufferIndex_, element.GetComponentCount(), ShaderDataTypeToBaseType(element.type), element.normalized ? GL_TRUE : GL_FALSE, layout.GetStride(), (const void*)element.offset);
-            spdlog::info("VA:  Index: {}, size: {}, stride: {}, offset : {} ", vertexBufferIndex_, element.GetComponentCount(), layout.GetStride(), element.offset);
+            spdlog::info("[OpenGL] Layout - ID: {} Size: {} Stride: {} Offset: {}", vertexBufferIndex_, element.GetComponentCount(), layout.GetStride(), element.offset);
             vertexBufferIndex_++;
             break;
         }
@@ -89,7 +89,7 @@ VertexArray& VertexArray::SetVertexBuffer(const std::shared_ptr<VertexBuffer>& v
             break;
         }
         default:
-            spdlog::error("Unknown ShaderDataType!");
+            spdlog::error("[OpenGL] Unknown ShaderDataType!");
         }
     }
 

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.6.0)
 
-set(CORE_INCLUDE_DIRS include)
-set(CORE_SOURCE_DIRS src)
+set(CORE_INCLUDE_DIRS ..)
+set(CORE_SOURCE_DIRS .)
 
 file(GLOB_RECURSE CORE_SRC_FILES CONFIGURE_DEPENDS ${CORE_SOURCE_DIRS}/*.cpp)
 

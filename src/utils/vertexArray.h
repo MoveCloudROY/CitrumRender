@@ -21,6 +21,9 @@ public:
     const std::shared_ptr<IndexBuffer>& GetIndexBuffer() const {
         return indexBuffer_;
     }
+    uint32_t GetSize() const {
+        return vertexBuffer_->GetSize();
+    }
 
 private:
     uint32_t                      rendererID_;

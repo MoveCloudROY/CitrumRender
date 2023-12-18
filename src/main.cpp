@@ -90,7 +90,7 @@ int main(void) {
     spdlog::set_level(spdlog::level::trace);
     spdlog::default_logger()->sinks().push_back(terminal_log.get_terminal_helper());
 
-    spdlog::info("Welcome to spdlog!");
+    spdlog::info("[Log] Initialized spdlog!");
     GLFWwindow* window;
     /* Initialize the library */
     if (!glfwInit())
@@ -123,7 +123,7 @@ int main(void) {
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(AppWindowWidth, AppWindowHeight, "LearnOpenGL", NULL, NULL);
     if (window == NULL) {
-        std::cout << "Failed to create GLFW window" << std::endl;
+        spdlog::error("[UI] Failed to create GLFW window");
         glfwTerminate();
         return EXIT_FAILURE;
     }
@@ -132,7 +132,7 @@ int main(void) {
     glfwMakeContextCurrent(window);
 
     if (glewInit() != GLEW_OK) {
-        std::cout << "Failed to initialize GLEW" << std::endl;
+        spdlog::error("[UI] Failed to initialize GLEW");
         return EXIT_FAILURE;
     }
 
@@ -149,7 +149,7 @@ int main(void) {
 
 
     // OpenGL 版本号输出
-    std::cout << glGetString(GL_VERSION) << std::endl;
+    spdlog::info("[OpenGL] Version {}", (char*)glGetString(GL_VERSION));
     // 设置视口大小
     glViewport(0, 0, gameWindowWidth, gameWindowHeight);
     // glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
@@ -165,7 +165,7 @@ int main(void) {
     auto meanscale = (xscale + yscale) / 2.f;
     if (meanscale <= 0.0F)
         meanscale = 1.0F;
-    spdlog::info("[UI] HiDPI scale: {}", meanscale);
+    spdlog::info("[UI] Detect HiDPI scale: {}", meanscale);
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsLight();
@@ -198,39 +198,49 @@ int main(void) {
     auto lightBlockSize = Utils::cubeVertices.size() * sizeof(Utils::cubeVertices[0]);
 
     auto lightBlockVertexBuf = std::make_shared<Utils::VertexBuffer>(nullptr, lightBlockSize);
-    lightBlockVertexBuf->SetLayout({
-        {"position", Utils::ShaderDataType::Vecf3},
-    });
-    lightBlockVertexBuf->SetSubData(Utils::cubeVertices).Unbind();
-    auto lightBlockVA = Utils::VertexArray{};
-    lightBlockVA.SetVertexBuffer(lightBlockVertexBuf).Unbind();
+    lightBlockVertexBuf->SetLayout({{"position", Utils::ShaderDataType::Vecf3}});
+    lightBlockVertexBuf->SetData(Utils::cubeVertices).Unbind();
+    auto lightBlockVA = std::make_shared<Utils::VertexArray>();
+    lightBlockVA->SetVertexBuffer(lightBlockVertexBuf);
+    lightBlockVA->Unbind();
+
+    // 创建墙面 VAO
+    auto wallVertexPosSize = Utils::wallVerticesPos.size() * sizeof(Utils::wallVerticesPos[0]);
+    auto wallVertexUvSize  = Utils::wallVerticesUV.size() * sizeof(Utils::wallVerticesUV[0]);
+
+    auto wallVertexBuf = std::make_shared<Utils::VertexBuffer>(wallVertexPosSize + wallVertexUvSize, true);
+    wallVertexBuf->SetSubData({"position", Utils::ShaderDataType::Vecf3}, Utils::wallVerticesPos);
+    wallVertexBuf->SetSubData({"uv", Utils::ShaderDataType::Vecf2}, Utils::wallVerticesUV);
+    wallVertexBuf->Unbind();
+    auto wallVA = std::make_shared<Utils::VertexArray>();
+    wallVA->SetVertexBuffer(wallVertexBuf);
+    wallVA->Unbind();
 
 
+    // 生成纹理
+    auto boxDiffTex = Utils::TextureBuilder(Utils::TextureType::TEXTURE_2D)
+                          .SetProps()
+                          .Attach("../src/assets/container2.png")
+                          .Build();
+    auto boxSpecTex = Utils::TextureBuilder(Utils::TextureType::TEXTURE_2D)
+                          .SetProps()
+                          .Attach("../src/assets/container2.png")
+                          .Build();
+
+    auto wallDiffTex = Utils::TextureBuilder(Utils::TextureType::TEXTURE_2D)
+                           .SetProps()
+                           .Attach("../src/assets/normalmap/brickwall.jpg")
+                           .Build();
+    auto wallNormMap = Utils::TextureBuilder(Utils::TextureType::TEXTURE_2D)
+                           .SetProps()
+                           .Attach("../src/assets/normalmap/brickwall_normal.jpg")
+                           .Build();
 
     // 生成着色器程序对象
     Utils::Shader gameShader("../src/shaders/vs/shader.vs", "../src/shaders/fs/shader.fs");
     Utils::Shader applicationShader("../src/shaders/vs/application.vs", "../src/shaders/fs/application.fs");
     Utils::Shader lightShader("../src/shaders/vs/light.vs", "../src/shaders/fs/light.fs");
-
-    // 生成纹理
-    auto diffTexture = Utils::TextureBuilder(Utils::TextureType::TEXTURE_2D)
-                           .SetProps()
-                           .Attach("../src/assets/container2.png")
-                           .Build();
-    auto specTexture = Utils::TextureBuilder(Utils::TextureType::TEXTURE_2D)
-                           .SetProps()
-                           .Attach("../src/assets/container2.png")
-                           .Build();
-    // auto cubeMapTexture = Utils::TextureBuilder(Utils::TextureType::TEXTURE_CUBE_MAP)
-    //                           .SetProps()
-    //                           .Attach("../src/assets/skybox/right.jpg")
-    //                           .Attach("../src/assets/skybox/left.jpg")
-    //                           .Attach("../src/assets/skybox/top.jpg")
-    //                           .Attach("../src/assets/skybox/bottom.jpg")
-    //                           .Attach("../src/assets/skybox/front.jpg")
-    //                           .Attach("../src/assets/skybox/back.jpg")
-    //                           .Build();
-
+    Utils::Shader normMapShader("../src/shaders/vs/normmap.vs", "../src/shaders/fs/normmap.fs");
     // Shader 配置
     gameShader.use();
     // 材质，光照设置
@@ -262,6 +272,38 @@ int main(void) {
         gameShader.setFloat(item + ".linear", 0.09f);
         gameShader.setFloat(item + ".quadratic", 0.032f);
     }
+
+    normMapShader.use();
+    // 材质，光照设置
+    normMapShader.setVec3f("lightColor", lightColor);
+
+    // normMapShader.setVec3f("material.ambient", glm::vec3{1.0f, 0.5f, 0.31f});
+    // normMapShader.setVec3f("material.diffuse", glm::vec3{1.0f, 0.5f, 0.31f});
+    normMapShader.setInt("material.diffuse", 0);
+    normMapShader.setInt("material.normal", 1);
+    normMapShader.setFloat("material.shininess", 10.0f);
+
+    normMapShader.setVec3f("spotLights[0].position", lightPos);
+    // normMapShader.setVec3f("spotLights[0].direction", glm::vec3{-0.2f, -1.0f, -0.3f});
+    normMapShader.setVec3f("spotLights[0].ambient", glm::vec3{0.2f, 0.2f, 0.2f});
+    normMapShader.setVec3f("spotLights[0].diffuse", glm::vec3{0.3f, 0.3f, 0.3f}); // 将光照调暗了一些以搭配场景
+    normMapShader.setVec3f("spotLights[0].specular", glm::vec3{1.0f, 1.0f, 1.0f});
+    normMapShader.setFloat("spotLights[0].constant", 1.0f);
+    normMapShader.setFloat("spotLights[0].linear", 0.07f);
+    normMapShader.setFloat("spotLights[0].quadratic", 0.017f);
+    normMapShader.setFloat("spotLights[0].cutOff", glm::cos(glm::radians(12.5f)));
+    normMapShader.setFloat("spotLights[0].outCutOff", glm::cos(glm::radians(17.5f)));
+    for (auto&& i = 0; i < 4; ++i) {
+        auto item = std::format("pointLights[{}]", i);
+        normMapShader.setVec3f(item + ".position", pointLightPositions[i]);
+        normMapShader.setVec3f(item + ".ambient", glm::vec3{0.2f, 0.2f, 0.2f});
+        normMapShader.setVec3f(item + ".diffuse", glm::vec3{0.3f, 0.3f, 0.3f}); // 将光照调暗了一些以搭配场景
+        normMapShader.setVec3f(item + ".specular", glm::vec3{1.0f, 1.0f, 1.0f});
+        normMapShader.setFloat(item + ".constant", 1.0f);
+        normMapShader.setFloat(item + ".linear", 0.09f);
+        normMapShader.setFloat(item + ".quadratic", 0.032f);
+    }
+
     // 光照 Shader
     lightShader.use();
     lightShader.setVec3f("lightColor", lightColor);
@@ -269,7 +311,7 @@ int main(void) {
     applicationShader.use();
     applicationShader.setInt("screenTexture", 0);
 
-
+    std::map<runtime::Texture, int> a;
 
     // 创建帧缓冲
     uint32_t gameWindowFbo;
@@ -298,7 +340,7 @@ int main(void) {
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+        spdlog::error("[OpenGL] ERROR::FRAMEBUFFER:: Framebuffer is not complete!");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     Utils::CubeMap cubeMap{
@@ -312,7 +354,7 @@ int main(void) {
 
     // 启用深度测试
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+    // glEnable(GL_CULL_FACE);
     // glCullFace(GL_FRONT);
 
     // Main loop
@@ -344,6 +386,35 @@ int main(void) {
         // 获得观察矩阵 (MVP - View)
         glm::mat4 view = camera.GetViewMatrix();
 
+
+        // 绑定 VAO
+        wallVA->Bind();
+
+        // 绑定纹理
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, wallDiffTex);
+        glActiveTexture(GL_TEXTURE0 + 1);
+        glBindTexture(GL_TEXTURE_2D, wallNormMap);
+        normMapShader.use();
+        normMapShader.setMatrix4f("view", view);
+        normMapShader.setMatrix4f("projection", projection);
+
+        normMapShader.setVec3f("viewPos", camera.m_position);
+
+        normMapShader.setVec3f("spotLights[0].position", camera.m_position);
+        normMapShader.setVec3f("spotLights[0].direction", camera.m_front);
+
+
+        // Draw Box
+        // for (size_t i = 0; i < 10; ++i) {
+        glm::mat4 model(1.0f);
+        // model = glm::translate(model, glm::vec3(0.7f, 0.2f, 2.0f));
+        normMapShader.setMatrix4f("model", model);
+        normMapShader.setMatrix3f("normalMat", glm::transpose(glm::inverse(glm::mat3{model})));
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        // }
+        wallVA->Unbind();
+
         gameShader.use();
         gameShader.setMatrix4f("view", view);
         gameShader.setMatrix4f("projection", projection);
@@ -353,26 +424,6 @@ int main(void) {
 
         gameShader.setVec3f("spotLights[0].position", camera.m_position);
         gameShader.setVec3f("spotLights[0].direction", camera.m_front);
-
-        // // 绑定 VAO
-        // glBindVertexArray(VAO);
-        // // 绑定纹理
-        // glActiveTexture(GL_TEXTURE0);
-        // glBindTexture(GL_TEXTURE_2D, diffTexture);
-        // glActiveTexture(GL_TEXTURE0 + 1);
-        // glBindTexture(GL_TEXTURE_2D, specTexture);
-
-        // glEnable(GL_DEPTH_TEST);
-        // // Draw Box
-        // for (size_t i = 0; i < 10; ++i) {
-        //     glm::mat4 model{1.0f};
-        //     model       = glm::translate(model, cubePositions[i]);
-        //     float angle = 20.0f * i;
-        //     model       = glm::rotate(model, angle, glm::vec3{1.f, 2.f, 3.f});
-        //     gameShader.setMatrix4f("model", model);
-        //     gameShader.setMatrix3f("normalMat", glm::transpose(glm::inverse(glm::mat3{model})));
-        //     glDrawArrays(GL_TRIANGLES, 0, 36);
-        // }
 
         glm::mat4 model_nano = glm::mat4(1.0f);
         model_nano           = glm::translate(model_nano, glm::vec3(0.0f, -7.0f, -3.0f)); // translate it down so it's at the center of the scene
@@ -385,12 +436,12 @@ int main(void) {
         //=========== Draw Light ===========//
         // Light Shader Compose
 
+        lightBlockVA->Bind();
+
         lightShader.use();
         lightShader.setMatrix4f("view", view);
         lightShader.setMatrix4f("projection", projection);
-
         lightShader.setVec3f("lightColor", lightColor);
-        lightBlockVA.Bind();
         for (auto&& posVec : std::span{pointLightPositions}) {
             glm::mat4 mlight{1.0f};
             // 创建模型矩阵 (MVP - Model)
@@ -401,7 +452,7 @@ int main(void) {
             // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
-        lightBlockVA.Unbind();
+        lightBlockVA->Unbind();
 
 
         // In order to make skybox look infinitely far away
@@ -446,6 +497,7 @@ int main(void) {
     ImGui::DestroyContext();
 
     glDeleteFramebuffers(1, &gameWindowFbo);
+    // glDeleteBuffers(1, &VBO); // TODO: TEMP
 
     glfwDestroyWindow(window);
     glfwTerminate();
@@ -493,7 +545,7 @@ void processCamera(GLFWwindow* window) {
     } else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
         camera.ProcessKeyboard(Camera::Movement::RIGHT, deltaTime);
     } else if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS) {
-        spdlog::info("Show Cursor due to press F5");
+        spdlog::info("[UI] Show Cursor due to press F5");
         hiddenCursor = false;
         camera.DetachMouse();
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -550,11 +602,10 @@ void renderMainImGui(GLFWwindow* window, auto colorBuffer) {
         auto ret         = ImGui::GetWindowSize();
         gameWindowWidth  = ret.x;
         gameWindowHeight = ret.y;
-        // spdlog::info("wize = ({}, {})", wsize.x, wsize.y);
         ImGui::ImageButton((ImTextureID)(unsigned long)colorBuffer, ret, ImVec2(0, 1), ImVec2(1, 0)); //自定义GUI内容
         bool isItemClicked = ImGui::IsItemClicked();
         if (hiddenCursor == false && isItemClicked) {
-            spdlog::info("Hidden Cursor due to click window");
+            spdlog::info("[UI] Hidden Cursor due to click window");
             camera.AttachMouse();
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             hiddenCursor = true;

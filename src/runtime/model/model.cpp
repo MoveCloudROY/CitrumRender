@@ -23,7 +23,7 @@ void Model::LoadModel(const std::string& path) {
     const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_FlipUVs);
 
     if (nullptr == scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-        spdlog::error("[ASSIMP] {} {} {} {}", __FILE_NAME__, __LINE__, __func__, importer.GetErrorString());
+        spdlog::error("[Model] {} {} {} {}", __FILE_NAME__, __LINE__, __func__, importer.GetErrorString());
         return;
     }
     directory_ = path.substr(0, path.find_last_of('/'));

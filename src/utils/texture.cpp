@@ -65,7 +65,7 @@ TextureBuilder& TextureBuilder::Attach(const std::string& path, bool flip) {
             glGenerateMipmap(TextureTypeToGLTarget(texType_) + textureIndex_);
         ++textureIndex_;
     } else {
-        spdlog::error("Failed to load texture: {}", path);
+        spdlog::error("[Texture] Failed to load texture: {}", path);
     }
     stbi_image_free(data);
 

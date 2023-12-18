@@ -6,13 +6,19 @@
 
 namespace EG::Utils {
 
-VertexBuffer::VertexBuffer(uint32_t size) {
+VertexBuffer::VertexBuffer(uint32_t size, bool interleaved)
+    : interleaved_(interleaved), layout_() {
     glCreateBuffers(1, &vboID_);
     glBindBuffer(GL_ARRAY_BUFFER, vboID_);
-    glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_DYNAMIC_DRAW);
+    if (interleaved)
+        glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_STATIC_DRAW);
+    else
+        glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_DYNAMIC_DRAW);
 }
 
-VertexBuffer::VertexBuffer(float* vertices, uint32_t size) {
+VertexBuffer::VertexBuffer(float* vertices, uint32_t size)
+    : interleaved_(0) {
+
     glCreateBuffers(1, &vboID_);
     glBindBuffer(GL_ARRAY_BUFFER, vboID_);
     glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
@@ -24,7 +30,6 @@ VertexBuffer::~VertexBuffer() {
 
 void VertexBuffer::Bind() const {
     glBindBuffer(GL_ARRAY_BUFFER, vboID_);
-    spdlog::info("Bind VBO: {}", vboID_);
 }
 
 void VertexBuffer::Unbind() const {

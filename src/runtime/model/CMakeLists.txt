@@ -1,6 +1,6 @@
 set(MODULE_NAME model)
 
-file(GLOB_RECURSE FILES CONFIGURE_DEPENDS src/*.cpp)
+file(GLOB_RECURSE FILES CONFIGURE_DEPENDS ./*.cpp)
 
 add_library(${MODULE_NAME} ${FILES})
 
@@ -13,4 +13,4 @@ target_link_libraries(${MODULE_NAME}
         utils
 )
 
-target_include_directories(${MODULE_NAME} PUBLIC include)
+target_include_directories(${MODULE_NAME} PUBLIC ..)

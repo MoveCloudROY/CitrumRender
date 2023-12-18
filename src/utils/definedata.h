@@ -203,8 +203,32 @@ static std::vector<float> windowVerticesUV = {
     1.0f, 1.0f
 };
 
-
-
+static std::vector<float> wallVerticesPos = {
+    // positions          
+    -1.0f,  1.0f, -1.0f,
+    -1.0f, -1.0f, -1.0f,
+    1.0f, -1.0f, -1.0f,
+    1.0f, -1.0f, -1.0f,
+    1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+};
+static std::vector<float> wallVerticesUV = {
+    0.0f, 0.0f,
+    1.0f, 0.0f,
+    1.0f, 1.0f,
+    1.0f, 1.0f,
+    0.0f, 1.0f,
+    0.0f, 0.0f,
+};
+static std::vector<float> wallVertices = {
+    // positions          
+    -1.0f,  1.0f, -1.0f,    0.0f, 0.0f,
+    -1.0f, -1.0f, -1.0f,    1.0f, 0.0f,
+    1.0f, -1.0f, -1.0f,    1.0f, 1.0f,
+    1.0f, -1.0f, -1.0f,    1.0f, 1.0f,
+    1.0f,  1.0f, -1.0f,    0.0f, 1.0f,
+    -1.0f,  1.0f, -1.0f,    0.0f, 0.0f,
+};
 // clang-format on
 
 } // namespace EG::Utils

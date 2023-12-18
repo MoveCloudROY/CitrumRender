@@ -1,6 +1,7 @@
 #include "utils/shader.h"
 #include <sstream>
 #include <string>
+#include <spdlog/spdlog.h>
 
 namespace EG::Utils {
 
@@ -27,9 +28,9 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
         vertexCode   = vShaderStream.str();
         fragmentCode = fShaderStream.str();
     } catch (std::ifstream::failure e) {
-        std::cout << "[Shader] ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
-        std::cout << "[Shader] Vertex Shader at: " << vertexPath << std::endl;
-        std::cout << "[Shader] Fragment Shader at: " << fragmentPath << std::endl;
+        spdlog::error("[OpenGL] ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ");
+        spdlog::error("[OpenGL] Vertex Shader at: {}", vertexPath);
+        spdlog::error("[OpenGL] Fragment Shader at: {}", fragmentPath);
     }
     const char* vShaderCode = vertexCode.c_str();
     const char* fShaderCode = fragmentCode.c_str();
@@ -45,9 +46,8 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
     glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
     if (!success) {
         glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "[Shader] ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
-                  << infoLog << std::endl;
-        std::cout << "[Shader] Error Vertex Shader at: " << vertexPath << std::endl;
+        spdlog::error("[OpenGL] ERROR::SHADER::VERTEX::COMPILATION_FAILED: {}", infoLog);
+        spdlog::error("[OpenGL] Error Vertex Shader at: {}", vertexPath);
     }
 
     // 片段(const std::string &name, const glm::mat4& mat) const着色器
@@ -57,9 +57,8 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
     if (!success) {
         glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "[Shader] ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
-                  << infoLog << std::endl;
-        std::cout << "[Shader] Error Fragment Shader at: " << fragmentPath << std::endl;
+        spdlog::error("[OpenGL] ERROR::SHADER::FRAGMENT::COMPILATION_FAILED: {}", infoLog);
+        spdlog::error("[OpenGL] Error Fragment Shader at: {}", fragmentPath);
     }
 
     // 链接着色器生成着色器程序对象
@@ -70,10 +69,9 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
     glGetProgramiv(ID, GL_LINK_STATUS, &success);
     if (!success) {
         glGetProgramInfoLog(ID, 512, NULL, infoLog);
-        std::cout << "[Shader] ERROR::PROGRAM::LINKED_FAILED\n"
-                  << infoLog << std::endl;
-        std::cout << "[Shader] Vertex Shader at: " << vertexPath << std::endl;
-        std::cout << "[Shader] Fragment Shader at: " << fragmentPath << std::endl;
+        spdlog::error("[OpenGL] ERROR::PROGRAM::LINKED_FAILED: {}", infoLog);
+        spdlog::error("[OpenGL] Vertex Shader at: {}", vertexPath);
+        spdlog::error("[OpenGL] Fragment Shader at: {}", fragmentPath);
     }
     // 删除 Shader, 链接后不再需要
     glDeleteShader(vertexShader);
